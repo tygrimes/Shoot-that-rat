@@ -2958,7 +2958,7 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
     "g          T  p ",
     "g  T    T  p    ",
     "g       p      ",
-    "g     g     g         h",
+    "g    h g     g         ",
     "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
     "duddddddddddudddddddduddddddddddddudd"
   ], {
@@ -2966,11 +2966,19 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
     width: 40,
     "x": () => [sprite("ground"), solid(), area()],
     "g": () => [sprite("grave"), solid(), body(), area()],
-    "h": () => [sprite("ghost"), solid(), body(), area()],
+    "h": () => [sprite("ghost"), solid(), body(), area(), "ghost", "dangerous"],
     "d": () => [sprite("deepground2")],
     "u": () => [sprite("deepground")],
     "T": () => [sprite("tooth"), area(), "points"],
     "p": () => [sprite("platform"), area(), solid()]
+  });
+  player.collides("dangerous", () => {
+    player.destroy();
+  });
+  player.collides("points", (p) => {
+    destroy(p);
+    score.value++;
+    score.text = score.value;
   });
   player.action(() => {
     if (player.grounded()) {
@@ -2992,6 +3000,10 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
     player.move(-MOVE_SPEED, 0);
     player.flipX(true);
     mewigi.flipX(true);
+  });
+  action("dangerous", (h) => {
+    h.move(0, 50);
+    h.move(0, -50);
   });
   keyDown("left", () => {
     BULLET_SPEED = -400;
@@ -3021,11 +3033,6 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
     if (b2.pos.x < 0 || b2.pos.x > width) {
       destroy(b2);
     }
-  });
-  player.collides("points", (p) => {
-    destroy(p);
-    score.value++;
-    score.text = score.value;
   });
   var score = add([
     text("0"),

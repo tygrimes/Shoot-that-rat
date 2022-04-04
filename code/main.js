@@ -62,7 +62,7 @@ addLevel([
   'g          T  p ',
   'g  T    T  p    ',
   'g       p      ',
-  'g     g     g         h',
+  'g    h g     g         ',
   'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
   'duddddddddddudddddddduddddddddddddudd',
 ],{
@@ -71,13 +71,26 @@ addLevel([
 
   'x' : ()=>[sprite('ground'),solid(), area()],
   'g' : ()=>[sprite('grave'), solid(),body(),area()],
-  'h' : ()=>[sprite('ghost'), solid(),body(),area()],
+  'h' : ()=>[sprite('ghost'), solid(),body(),area(), "ghost","dangerous"],
   //'M' : ()=>[sprite('mewigi'), solid(),body(),area()],
   'd' : ()=>[sprite('deepground2')],
   'u' : ()=>[sprite('deepground')],
   'T' : ()=>[sprite('tooth'), area(), "points"],
   'p' : ()=>[sprite('platform'), area(),solid()],
 })
+
+
+//player-related
+player.collides("dangerous", ()=>
+  {
+    player.destroy();
+  })
+
+  player.collides('points', (p) => {
+    destroy(p)
+    score.value++
+    score.text = score.value
+  })
 
   player.action(() => {
     if(player.grounded()) {
@@ -105,6 +118,14 @@ keyDown('left', ()=> {
   mewigi.flipX(true);
 })
 
+//enemy-related
+action('dangerous', (h) =>{
+      h.move(0,50)
+      h.move(0,-50)
+  }
+)
+
+//bullet-related
 keyDown('left', ()=>{
   BULLET_SPEED = -400;
 })
@@ -142,13 +163,8 @@ action('bullet', (b) =>{
 )
 
 
-  player.collides('points', (p) => {
-    destroy(p)
-    score.value++
-    score.text = score.value
-  })
 
-
+//misc
 const score = add([
   text('0'),
   pos(10,10),
