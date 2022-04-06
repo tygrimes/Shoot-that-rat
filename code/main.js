@@ -1,3 +1,5 @@
+//setup
+
 import kaboom from "kaboom"
 import {movement} from "./movement.js"
 
@@ -17,13 +19,15 @@ loadPedit("platform", "sprites/platform.pedit");
 loadPedit("bullet", "sprites/bullet.pedit");
 loadSprite("bg", "sprites/bg.jpg");
 loadPedit("ghost", "sprites/ghost.pedit");
+loadPedit("hole", "sprites/hole.pedit");
 
 let BULLET_SPEED = 400;
 let SCORE_VALUE = 0
 let isFlipped = false; 
 const MOVE_SPEED = 200;
 const JUMP_FORCE = 360;
-let CURRENT_JUMP_FORCE = JUMP_FORCE
+let CURRENT_JUMP_FORCE = JUMP_FORCE;
+let hspeed = -50;
 
 layer(['obj', 'ui'] , 'obj')
 
@@ -32,7 +36,6 @@ layer(['obj', 'ui'] , 'obj')
     ]);
 
 const player = add([
-    // list of components
     sprite("luigi"),
     pos(80, 60),
     area(),
@@ -40,38 +43,45 @@ const player = add([
 ])
 
 const mewigi = add([
-    // list of components
     sprite("mewigi"),
   scale(0.6),
     pos(20,60),
     area(),
      follow(player, vec2(10, -10)),
- 
+
 ])
 
+const hole = add([
+  sprite("hole"),
+  pos(1000,308),
+  area(),
+  solid(),
+  scale(2),
+  "next"
+])
 player.onUpdate(() => {
 	camPos(player.pos)
 }) 
 
 addLevel([
-  'g             ',
-  'g             ',
-  'g             ',
-  'g             ',
-  'g             T',
-  'g          T  p ',
-  'g  T    T  p    ',
-  'g       p      ',
-  'g    h g     g         ',
-  'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
-  'duddddddddddudddddddduddddddddddddudd',
+  'g                        ',
+  'g                        ',
+  'g                        ',
+  'g                        ',
+  'g             T          ',
+  'g          T  p          ',
+  'g  T    T  p             ',
+  'g     h p   h            ',
+  'g     g     g            ',
+  'xxxxxxxxxxxxxxxxxxxxxxxxxx',
+  'dudddddddddduddddddddddddd',
 ],{
   height: 35,
   width: 40,
 
   'x' : ()=>[sprite('ground'),solid(), area()],
   'g' : ()=>[sprite('grave'), solid(),body(),area()],
-  'h' : ()=>[sprite('ghost'), solid(),body(),area(), "ghost","dangerous"],
+  'h' : ()=>[sprite('ghost'), area(), pos(), 'ghost',"dangerous"],
   //'M' : ()=>[sprite('mewigi'), solid(),body(),area()],
   'd' : ()=>[sprite('deepground2')],
   'u' : ()=>[sprite('deepground')],
@@ -84,6 +94,7 @@ addLevel([
 player.collides("dangerous", ()=>
   {
     player.destroy();
+    mewigi.destroy();
   })
 
   player.collides('points', (p) => {
@@ -92,7 +103,11 @@ player.collides("dangerous", ()=>
     score.text = score.value
   })
 
-  player.action(() => {
+    player.collides('dangerous', (d) => {
+    destroy(player)
+  })
+
+  player.onUpdate(() => {
     if(player.grounded()) {
       isJumping = false
     }
@@ -119,9 +134,11 @@ keyDown('left', ()=> {
 })
 
 //enemy-related
-action('dangerous', (h) =>{
-      h.move(0,50)
-      h.move(0,-50)
+
+onUpdate('ghost', (h) =>{
+  if (h.pos.y <= 200){hspeed = 50} 
+  else if (h.pos.y >= 230) {hspeed = -50}
+  h.move(0, hspeed)
   }
 )
 
@@ -151,7 +168,7 @@ function spawnBullet(p) {
     ])
 }
   
-action('bullet', (b) =>{
+onUpdate('bullet', (b) =>{
       b.move(b.speed,0)
       if (b.speed < 0){
         b.flipX(true);
@@ -162,7 +179,18 @@ action('bullet', (b) =>{
 }
 )
 
+onCollide('bullet', 'ghost', (b,h)=> {
+  destroy(b)
+  destroy(h)
+  score.value++
+  score.text = score.value
+}) 
 
+
+player.collides("next", ()=>
+  {
+    console.log("level")
+  })
 
 //misc
 const score = add([

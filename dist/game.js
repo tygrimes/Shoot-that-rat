@@ -2925,10 +2925,12 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
   loadPedit("bullet", "sprites/bullet.pedit");
   loadSprite("bg", "sprites/bg.jpg");
   loadPedit("ghost", "sprites/ghost.pedit");
+  loadPedit("hole", "sprites/hole.pedit");
   var BULLET_SPEED = 400;
   var MOVE_SPEED = 200;
   var JUMP_FORCE = 360;
   var CURRENT_JUMP_FORCE = JUMP_FORCE;
+  var hspeed = -50;
   layer(["obj", "ui"], "obj");
   add([
     sprite("bg", { width: width() * 2, height: height() * 2 })
@@ -2946,27 +2948,35 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
     area(),
     follow(player, vec2(10, -10))
   ]);
+  var hole = add([
+    sprite("hole"),
+    pos(1e3, 308),
+    area(),
+    solid(),
+    scale(2),
+    "next"
+  ]);
   player.onUpdate(() => {
     camPos(player.pos);
   });
   addLevel([
-    "g             ",
-    "g             ",
-    "g             ",
-    "g             ",
-    "g             T",
-    "g          T  p ",
-    "g  T    T  p    ",
-    "g       p      ",
-    "g    h g     g         ",
-    "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-    "duddddddddddudddddddduddddddddddddudd"
+    "g                        ",
+    "g                        ",
+    "g                        ",
+    "g                        ",
+    "g             T          ",
+    "g          T  p          ",
+    "g  T    T  p             ",
+    "g     h p   h            ",
+    "g     g     g            ",
+    "xxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "dudddddddddduddddddddddddd"
   ], {
     height: 35,
     width: 40,
     "x": () => [sprite("ground"), solid(), area()],
     "g": () => [sprite("grave"), solid(), body(), area()],
-    "h": () => [sprite("ghost"), solid(), body(), area(), "ghost", "dangerous"],
+    "h": () => [sprite("ghost"), area(), pos(), "ghost", "dangerous"],
     "d": () => [sprite("deepground2")],
     "u": () => [sprite("deepground")],
     "T": () => [sprite("tooth"), area(), "points"],
@@ -2974,13 +2984,17 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
   });
   player.collides("dangerous", () => {
     player.destroy();
+    mewigi.destroy();
   });
   player.collides("points", (p) => {
     destroy(p);
     score.value++;
     score.text = score.value;
   });
-  player.action(() => {
+  player.collides("dangerous", (d) => {
+    destroy(player);
+  });
+  player.onUpdate(() => {
     if (player.grounded()) {
       isJumping = false;
     }
@@ -3001,9 +3015,13 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
     player.flipX(true);
     mewigi.flipX(true);
   });
-  action("dangerous", (h) => {
-    h.move(0, 50);
-    h.move(0, -50);
+  onUpdate("ghost", (h) => {
+    if (h.pos.y <= 200) {
+      hspeed = 50;
+    } else if (h.pos.y >= 230) {
+      hspeed = -50;
+    }
+    h.move(0, hspeed);
   });
   keyDown("left", () => {
     BULLET_SPEED = -400;
@@ -3025,7 +3043,7 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
     ]);
   }
   __name(spawnBullet, "spawnBullet");
-  action("bullet", (b2) => {
+  onUpdate("bullet", (b2) => {
     b2.move(b2.speed, 0);
     if (b2.speed < 0) {
       b2.flipX(true);
@@ -3033,6 +3051,15 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
     if (b2.pos.x < 0 || b2.pos.x > width) {
       destroy(b2);
     }
+  });
+  onCollide("bullet", "ghost", (b2, h) => {
+    destroy(b2);
+    destroy(h);
+    score.value++;
+    score.text = score.value;
+  });
+  player.collides("next", () => {
+    console.log("level");
   });
   var score = add([
     text("0"),
