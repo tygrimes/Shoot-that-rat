@@ -2931,135 +2931,178 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
   var JUMP_FORCE = 360;
   var CURRENT_JUMP_FORCE = JUMP_FORCE;
   var hspeed = -50;
-  layer(["obj", "ui"], "obj");
-  add([
-    sprite("bg", { width: width() * 2, height: height() * 2 })
-  ]);
-  var player = add([
-    sprite("luigi"),
-    pos(80, 60),
-    area(),
-    body()
-  ]);
-  var mewigi = add([
-    sprite("mewigi"),
-    scale(0.6),
-    pos(20, 60),
-    area(),
-    follow(player, vec2(10, -10))
-  ]);
-  var hole = add([
-    sprite("hole"),
-    pos(1e3, 308),
-    area(),
-    solid(),
-    scale(2),
-    "next"
-  ]);
-  player.onUpdate(() => {
-    camPos(player.pos);
-  });
-  addLevel([
-    "g                        ",
-    "g                        ",
-    "g                        ",
-    "g                        ",
-    "g             T          ",
-    "g          T  p          ",
-    "g  T    T  p             ",
-    "g     h p   h            ",
-    "g     g     g            ",
-    "xxxxxxxxxxxxxxxxxxxxxxxxxx",
-    "dudddddddddduddddddddddddd"
-  ], {
-    height: 35,
-    width: 40,
-    "x": () => [sprite("ground"), solid(), area()],
-    "g": () => [sprite("grave"), solid(), body(), area()],
-    "h": () => [sprite("ghost"), area(), pos(), "ghost", "dangerous"],
-    "d": () => [sprite("deepground2")],
-    "u": () => [sprite("deepground")],
-    "T": () => [sprite("tooth"), area(), "points"],
-    "p": () => [sprite("platform"), area(), solid()]
-  });
-  player.collides("dangerous", () => {
-    player.destroy();
-    mewigi.destroy();
-  });
-  player.collides("points", (p) => {
-    destroy(p);
-    score.value++;
-    score.text = score.value;
-  });
-  player.collides("dangerous", (d) => {
-    destroy(player);
-  });
-  player.onUpdate(() => {
-    if (player.grounded()) {
-      isJumping = false;
-    }
-  });
-  keyPress("space", () => {
-    if (player.grounded()) {
-      isJumping = true;
-      player.jump(CURRENT_JUMP_FORCE);
-    }
-  });
-  keyDown("right", () => {
-    player.move(MOVE_SPEED, 0);
-    player.flipX(false);
-    mewigi.flipX(false);
-  });
-  keyDown("left", () => {
-    player.move(-MOVE_SPEED, 0);
-    player.flipX(true);
-    mewigi.flipX(true);
-  });
-  onUpdate("ghost", (h) => {
-    if (h.pos.y <= 200) {
-      hspeed = 50;
-    } else if (h.pos.y >= 230) {
-      hspeed = -50;
-    }
-    h.move(0, hspeed);
-  });
-  keyDown("left", () => {
-    BULLET_SPEED = -400;
-  });
-  keyDown("right", () => {
-    BULLET_SPEED = 400;
-  });
-  keyPress("e", () => {
-    spawnBullet(mewigi.pos.add(20, 0));
-  });
-  function spawnBullet(p) {
+  var LEVELS = [
+    [
+      "g                        g",
+      "g                        g",
+      "g                        g",
+      "g                        g",
+      "g             T          g",
+      "g          T  p          g",
+      "g  T    T  p             g",
+      "g     h p   h            g",
+      "g     g     g         o  g",
+      "xxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "dudddddddddduddddddddddddd"
+    ],
+    [
+      "g                        g",
+      "g                        g",
+      "g                        g",
+      "g                        g",
+      "g                        g",
+      "g          T  p          g",
+      "g  T    T  p             g",
+      "g     h p   h            g",
+      "g     g     g         o  g",
+      "xxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "dudddddddddduddddddddddddd"
+    ]
+  ];
+  scene("game", ({ levelIdx, score: score2 }) => {
+    layers(["bg", "obj", "ui"], "obj");
     add([
-      sprite("bullet"),
-      pos(p),
-      area(),
-      origin("center"),
-      "bullet",
-      { speed: BULLET_SPEED }
+      sprite("bg", { width: width() * 2, height: height() * 2 })
     ]);
-  }
-  __name(spawnBullet, "spawnBullet");
-  onUpdate("bullet", (b2) => {
-    b2.move(b2.speed, 0);
-    if (b2.speed < 0) {
-      b2.flipX(true);
+    const level = addLevel(LEVELS[levelIdx || 0], {
+      height: 35,
+      width: 40,
+      "x": () => [
+        sprite("ground"),
+        solid(),
+        area()
+      ],
+      "g": () => [
+        sprite("grave"),
+        solid(),
+        body(),
+        area()
+      ],
+      "h": () => [
+        sprite("ghost"),
+        area(),
+        pos(),
+        "ghost",
+        "dangerous"
+      ],
+      "d": () => [
+        sprite("deepground2")
+      ],
+      "u": () => [
+        sprite("deepground")
+      ],
+      "T": () => [
+        sprite("tooth"),
+        area(),
+        "points"
+      ],
+      "p": () => [
+        sprite("platform"),
+        area(),
+        solid()
+      ],
+      "o": () => [
+        sprite("hole"),
+        area(),
+        scale(2),
+        "next"
+      ]
+    });
+    const player = add([
+      sprite("luigi"),
+      pos(80, 60),
+      area(),
+      body()
+    ]);
+    const mewigi = add([
+      sprite("mewigi"),
+      scale(0.6),
+      pos(20, 60),
+      area(),
+      follow(player, vec2(10, -10))
+    ]);
+    player.onUpdate(() => {
+      camPos(player.pos);
+    });
+    player.collides("dangerous", () => {
+      player.destroy();
+      mewigi.destroy();
+    });
+    player.collides("points", (p) => {
+      destroy(p);
+      score2.value++;
+      score2.text = score2.value;
+    });
+    player.collides("dangerous", (d) => {
+      destroy(player);
+    });
+    player.onUpdate(() => {
+      if (player.grounded()) {
+        isJumping = false;
+      }
+    });
+    keyPress("space", () => {
+      if (player.grounded()) {
+        isJumping = true;
+        player.jump(CURRENT_JUMP_FORCE);
+      }
+    });
+    keyDown("right", () => {
+      player.move(MOVE_SPEED, 0);
+      player.flipX(false);
+      mewigi.flipX(false);
+    });
+    keyDown("left", () => {
+      player.move(-MOVE_SPEED, 0);
+      player.flipX(true);
+      mewigi.flipX(true);
+    });
+    onUpdate("ghost", (h) => {
+      if (h.pos.y <= 200) {
+        hspeed = 50;
+      } else if (h.pos.y >= 230) {
+        hspeed = -50;
+      }
+      h.move(0, hspeed);
+    });
+    keyDown("left", () => {
+      BULLET_SPEED = -400;
+    });
+    keyDown("right", () => {
+      BULLET_SPEED = 400;
+    });
+    keyPress("e", () => {
+      spawnBullet(mewigi.pos.add(20, 0));
+    });
+    function spawnBullet(p) {
+      add([
+        sprite("bullet"),
+        pos(p),
+        area(),
+        origin("center"),
+        "bullet",
+        { speed: BULLET_SPEED }
+      ]);
     }
-    if (b2.pos.x < 0 || b2.pos.x > width) {
+    __name(spawnBullet, "spawnBullet");
+    onUpdate("bullet", (b2) => {
+      b2.move(b2.speed, 0);
+      if (b2.speed < 0) {
+        b2.flipX(true);
+      }
+      if (b2.pos.x < 0 || b2.pos.x > width) {
+        destroy(b2);
+      }
+    });
+    onCollide("bullet", "ghost", (b2, h) => {
       destroy(b2);
-    }
-  });
-  onCollide("bullet", "ghost", (b2, h) => {
-    destroy(b2);
-    destroy(h);
-    score.value++;
-    score.text = score.value;
-  });
-  player.collides("next", () => {
-    console.log("level");
+      destroy(h);
+      score2.value++;
+      score2.text = score2.value;
+    });
+    player.collides("next", () => {
+      console.log("level");
+    });
   });
   var score = add([
     text("0"),
@@ -3070,5 +3113,13 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
       value: 0
     }
   ]);
+  function start() {
+    go("game", {
+      levelIdx: 0,
+      score: 0
+    });
+  }
+  __name(start, "start");
+  start();
 })();
 //# sourceMappingURL=game.js.map

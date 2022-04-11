@@ -1,11 +1,9 @@
 //setup
-
 import kaboom from "kaboom"
-import {movement} from "./movement.js"
-
 
 // initialize context
 kaboom()
+
 
 // load assets
 loadPedit("luigi", "sprites/luigi.pedit")
@@ -29,11 +27,88 @@ const JUMP_FORCE = 360;
 let CURRENT_JUMP_FORCE = JUMP_FORCE;
 let hspeed = -50;
 
-layer(['obj', 'ui'] , 'obj')
 
-  add([
-      sprite("bg", {width: width() * 2, height: height() * 2})
+  //back
+  
+
+
+    const LEVELS = [
+  [
+  'g                        g',
+  'g                        g',
+  'g                        g',
+  'g                        g',
+  'g             T          g',
+  'g          T  p          g',
+  'g  T    T  p             g',
+  'g     h p   h            g',
+  'g     g     g         o  g',
+  'xxxxxxxxxxxxxxxxxxxxxxxxxx',
+  'dudddddddddduddddddddddddd',
+], 
+[
+  'g                        g',
+  'g                        g',
+  'g                        g',
+  'g                        g',
+  'g                        g',
+  'g          T  p          g',
+  'g  T    T  p             g',
+  'g     h p   h            g',
+  'g     g     g         o  g',
+  'xxxxxxxxxxxxxxxxxxxxxxxxxx',
+  'dudddddddddduddddddddddddd',
+]
+  ]
+scene("game", ({levelIdx, score }) => {
+
+  layers(['bg', 'obj', 'ui'], 'obj')
+    add([ sprite("bg", {width: width() * 2, height: height() * 2})
     ]);
+
+	const level = addLevel(LEVELS[levelIdx || 0], {
+  height: 35,
+  width: 40,
+  'x' : ()=>[
+    sprite('ground'),
+    solid(), 
+    area(),
+  ],
+  'g' : ()=>[
+    sprite('grave'),
+    solid(),
+    body(),
+    area(),
+  ],
+  'h' : ()=>[
+    sprite('ghost'), 
+    area(), 
+    pos(), 
+    'ghost',
+    "dangerous",
+  ],
+  
+  'd' : ()=>[
+    sprite('deepground2'),
+  ],
+  'u' : ()=>[sprite('deepground'),
+  ],
+  'T' : ()=>[sprite('tooth'),
+             area(), 
+             "points",
+  ],
+  'p' : ()=>[sprite('platform'),
+             area(),
+             solid(),
+  ],
+  'o' : ()=>[sprite('hole'),
+             area(),
+             scale(2),
+             "next"
+  ],
+})
+
+
 
 const player = add([
     sprite("luigi"),
@@ -51,47 +126,12 @@ const mewigi = add([
 
 ])
 
-const hole = add([
-  sprite("hole"),
-  pos(1000,308),
-  area(),
-  solid(),
-  scale(2),
-  "next"
-])
+
 player.onUpdate(() => {
 	camPos(player.pos)
 }) 
 
-addLevel([
-  'g                        ',
-  'g                        ',
-  'g                        ',
-  'g                        ',
-  'g             T          ',
-  'g          T  p          ',
-  'g  T    T  p             ',
-  'g     h p   h            ',
-  'g     g     g            ',
-  'xxxxxxxxxxxxxxxxxxxxxxxxxx',
-  'dudddddddddduddddddddddddd',
-],{
-  height: 35,
-  width: 40,
-
-  'x' : ()=>[sprite('ground'),solid(), area()],
-  'g' : ()=>[sprite('grave'), solid(),body(),area()],
-  'h' : ()=>[sprite('ghost'), area(), pos(), 'ghost',"dangerous"],
-  //'M' : ()=>[sprite('mewigi'), solid(),body(),area()],
-  'd' : ()=>[sprite('deepground2')],
-  'u' : ()=>[sprite('deepground')],
-  'T' : ()=>[sprite('tooth'), area(), "points"],
-  'p' : ()=>[sprite('platform'), area(),solid()],
-})
-
-
-//player-related
-player.collides("dangerous", ()=>
+  player.collides("dangerous", ()=>
   {
     player.destroy();
     mewigi.destroy();
@@ -192,15 +232,35 @@ player.collides("next", ()=>
     console.log("level")
   })
 
+  
+
+})
+
+
+
+
+
+//player-related
+
+
 //misc
 const score = add([
-  text('0'),
-  pos(10,10),
+   text('0'),
+   pos(10,10),
   layer('ui'),
-  fixed(),
+   fixed(),
   {
-    value: 0,
-  }
-])
+     value: 0,
+   }
+ ])
 
 
+
+
+function start() {
+	go("game", {
+		levelIdx: 0,
+		score: 0,
+	})
+}
+start()
