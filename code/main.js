@@ -1,4 +1,4 @@
-//setup
+ //setup
 import kaboom from "kaboom"
 
 // initialize context
@@ -18,6 +18,11 @@ loadPedit("bullet", "sprites/bullet.pedit");
 loadSprite("bg", "sprites/bg.jpg");
 loadPedit("ghost", "sprites/ghost.pedit");
 loadPedit("hole", "sprites/hole.pedit");
+loadPedit("invis", "sprites/invis.pedit");
+loadPedit("lvl2ground", "sprites/lvl2ground.pedit");
+loadPedit("newground2", "sprites/newground2.pedit");
+loadPedit("secret", "sprites/secret.pedit");
+
 
 let BULLET_SPEED = 400;
 let SCORE_VALUE = 0
@@ -33,32 +38,45 @@ let hspeed = -50;
 
 
     const LEVELS = [
-  [
-  'g                        g',
-  'g                        g',
-  'g                        g',
-  'g                        g',
-  'g             T          g',
-  'g          T  p          g',
-  'g  T    T  p             g',
-  'g     h p   h            g',
-  'g     g     g         o  g',
+  [  
+  '?U                     ?  ',
+  '?    ssss         s    ?  ',
+  '?         sssssss    s ?  ',
+  '?                   s  ?  ',
+  '?             T  s     ?  ',
+  '?          T  p        ?  ',
+  '?  T    T  p           ?  ',
+  '?     h p   h          ?  ',
+  '?     g     g       o  ?  ',
   'xxxxxxxxxxxxxxxxxxxxxxxxxx',
   'dudddddddddduddddddddddddd',
 ], 
 [
-  'g                        g',
-  'g                        g',
-  'g                        g',
-  'g                        g',
-  'g                        g',
-  'g          T  p          g',
-  'g  T    T  p             g',
-  'g     h p   h            g',
-  'g     g     g         o  g',
-  'xxxxxxxxxxxxxxxxxxxxxxxxxx',
-  'dudddddddddduddddddddddddd',
-]
+  '?U                       ?',
+  '?                        ?',
+  '?                        ?',
+  '?             h          ?',
+  '?             g          ?',
+  '?          T  p          ?',
+  '?  T  p  p               ?',
+  '?  p  h  h        h   h  ?',
+  '?p    g  g        g o g  ?',
+  '___-____----__---_-__---__',
+  'dddddddudddududddduddddddu',
+], 
+   [
+  '?U                       ?',
+  '?                        ?',
+  '?                        ?',
+  '?                        ?',
+  '?                        ?',
+  '?          T  p          ?',
+  '?  T    T  p             ?',
+  '?     h p   h            ?',
+  '?     g     g       o    ?',
+  '___-____----__---_-__---__',
+  'dddddddudddududddduddddddu',
+]   
   ]
 scene("game", ({levelIdx, score }) => {
 
@@ -104,15 +122,42 @@ scene("game", ({levelIdx, score }) => {
   'o' : ()=>[sprite('hole'),
              area(),
              scale(2),
+             body(),
              "next"
+  ],
+  '?' : ()=>[sprite('invis'),
+             area(),
+             body(),
+             solid()
+  ],
+  '_' : ()=>[sprite('lvl2ground'),
+            area(),
+             solid()
+  ],
+  '-' : ()=>[sprite('newground2'),
+            area(),
+             solid()
+  ],
+      'U' : ()=>[sprite('hole'),
+            area(),
+            solid(),
+            scale(4),
+            "entry"
+  ],
+    's' : ()=>[sprite('secret'),
+            area(),
+            solid(),
   ],
 })
 
-
+onUpdate('entry', (e) =>{
+        e.flipY(true);
+      }
+)
 
 const player = add([
     sprite("luigi"),
-    pos(80, 60),
+    pos(80, 30),
     area(),
   body()
 ])
@@ -135,6 +180,7 @@ player.onUpdate(() => {
   {
     player.destroy();
     mewigi.destroy();
+    go("lose")
   })
 
   player.collides('points', (p) => {
@@ -143,9 +189,16 @@ player.onUpdate(() => {
     score.text = score.value
   })
 
-    player.collides('dangerous', (d) => {
-    destroy(player)
-  })
+  player.collides("next", () => {
+		if (levelIdx < LEVELS.length - 1) {
+			go("game", {
+				levelIdx: levelIdx + 1,
+				score: score,
+			})
+		} else {
+			go("win", { score: score, })
+		}
+	})
 
   player.onUpdate(() => {
     if(player.grounded()) {
@@ -230,6 +283,7 @@ onCollide('bullet', 'ghost', (b,h)=> {
 player.collides("next", ()=>
   {
     console.log("level")
+    
   })
 
   
@@ -253,6 +307,31 @@ const score = add([
      value: 0,
    }
  ])
+
+
+scene("win", ({ score }) => {
+
+	add([
+		text(`You ripped out ${score} teeth!!!`, {
+			width: width(),
+		}),
+		pos(12),
+	])
+
+})
+
+scene("lose", () => {
+
+    add([
+        text("Luigi never made it to his dentist appointment. The police never found a body, nor did they find his cat. The mystery goes unsolved to this very day."),
+        pos(12),
+    ])
+
+  
+    // Press any key to go back
+    onKeyPress(start)
+  })
+
 
 
 
