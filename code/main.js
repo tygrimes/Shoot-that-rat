@@ -24,11 +24,11 @@ loadPedit("newground2", "sprites/newground2.pedit");
 loadPedit("secret", "sprites/secret.pedit");
 
 
-let BULLET_SPEED = 400;
+let BULLET_SPEED = 1000;
 let SCORE_VALUE = 0
 let isFlipped = false; 
-const MOVE_SPEED = 200;
-const JUMP_FORCE = 360;
+const MOVE_SPEED = 300;
+const JUMP_FORCE = 560;
 let CURRENT_JUMP_FORCE = JUMP_FORCE;
 let hspeed = -50;
 
@@ -37,13 +37,41 @@ let hspeed = -50;
   
 
 
+//LEVELS TEMPLATE
+//  [  
+//   '?U                     ?  ',
+//   '?                      ?  ',
+//   '?                      ?  ',
+//   '?                      ?  ',
+//   '?                      ?  ',
+//   '?                      ?  ',
+//   '?                      ?  ',
+//   '?                      ?  ',
+//   '?                      ?  ',
+//   'xxxxxxxxxxxxxxxxxxxxxxxxxx',
+//   'dudddddddddduddddddddddddd',
+// ], 
     const LEVELS = [
+
+  [  
+   '?U                     ?  ',
+   '?                      ?  ',
+   '?                      ?  ',
+   '?                      ?  ',
+   '?                      ?  ',
+   '?                      ?  ',
+   '?                      ?  ',
+   '?                      ?  ',
+   '?        g      T   o  ?  ',
+   'xxxxxxxxxxxxxxxxxxxxxxxxxx',
+   'dudddddddddduddddddddddddd',
+ ], 
   [  
   '?U                     ?  ',
-  '?    ssss         s    ?  ',
-  '?         sssssss    s ?  ',
-  '?                   s  ?  ',
-  '?             T  s     ?  ',
+  '?    sss s             ?  ',
+  '?                      ?  ',
+  '?         s            ?  ',
+  '?             T        ?  ',
   '?          T  p        ?  ',
   '?  T    T  p           ?  ',
   '?     h p   h          ?  ',
@@ -147,8 +175,14 @@ scene("game", ({levelIdx, score }) => {
     's' : ()=>[sprite('secret'),
             area(),
             solid(),
-  ],
+  ], 
 })
+
+  add([
+   text(score),
+   pos(10,10),
+   fixed(),
+ ])
 
 onUpdate('entry', (e) =>{
         e.flipY(true);
@@ -164,14 +198,59 @@ const player = add([
 
 const mewigi = add([
     sprite("mewigi"),
-  scale(0.6),
+    scale(0.6),
     pos(20,60),
     area(),
-     follow(player, vec2(10, -10)),
+    follow(player, vec2(10, -10)),
 
 ])
 
+  if (levelIdx == 0){
+  add([
+  		text(`Use the arrow keys to move left and right`, {
+  			width: 150,
+        size: 20,
+  		}),
+  		pos(24, 180),
+  	])
 
+add([
+  		text(`Press space to overcome jeff bezos's grave`, {
+  			width: 150,
+        size: 20,
+      }),
+  		pos(400, 180),
+  	])
+
+
+  add([
+  		text(`Collect teeth to raise your score!`, {
+  			width: 150,
+        size: 20,
+  		}),
+  		pos(600, 180),
+  	])
+  add([
+		text(` To the next level`, {
+ 			width: 150,
+       size: 20,
+ 		}),
+ 		pos(800, 240),
+ 	])
+}
+
+  if (levelIdx == 1){
+      add([
+  		text(`Luigi is deathly afraid of ghosts! Press E to get Mewigi to utilize the second amendment`, {
+  			width: 230,
+        size: 15,
+  		}),
+  		pos(24, 180),
+  	])
+  }
+  
+
+ 
 player.onUpdate(() => {
 	camPos(player.pos)
 }) 
@@ -185,8 +264,7 @@ player.onUpdate(() => {
 
   player.collides('points', (p) => {
     destroy(p)
-    score.value++
-    score.text = score.value
+    score = score + 1;
   })
 
   player.collides("next", () => {
@@ -237,11 +315,11 @@ onUpdate('ghost', (h) =>{
 
 //bullet-related
 keyDown('left', ()=>{
-  BULLET_SPEED = -400;
+  BULLET_SPEED = -1000;
 })
 
 keyDown('right', ()=>{
-  BULLET_SPEED = 400;
+  BULLET_SPEED = 1000;
 })
 
 keyPress('e', () => {
@@ -298,15 +376,7 @@ player.collides("next", ()=>
 
 
 //misc
-const score = add([
-   text('0'),
-   pos(10,10),
-  layer('ui'),
-   fixed(),
-  {
-     value: 0,
-   }
- ])
+
 
 
 scene("win", ({ score }) => {
@@ -339,7 +409,8 @@ scene("lose", () => {
 function start() {
 	go("game", {
 		levelIdx: 0,
-		score: 0,
+    score: 0,
 	})
 }
+
 start()
