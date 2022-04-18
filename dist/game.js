@@ -2931,8 +2931,9 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
   loadPedit("newground2", "sprites/newground2.pedit");
   loadPedit("secret", "sprites/secret.pedit");
   var BULLET_SPEED = 1e3;
-  var MOVE_SPEED = 300;
-  var JUMP_FORCE = 560;
+  var score = 0;
+  var MOVE_SPEED = 310;
+  var JUMP_FORCE = 500;
   var CURRENT_JUMP_FORCE = JUMP_FORCE;
   var hspeed = -50;
   var LEVELS = [
@@ -2948,6 +2949,19 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
       "?        g      T   o  ?  ",
       "xxxxxxxxxxxxxxxxxxxxxxxxxx",
       "dudddddddddduddddddddddddd"
+    ],
+    [
+      "?U                                            ?",
+      "?                                             ?",
+      "?  p                                          ?",
+      "?                                             ?",
+      "?                                             ?",
+      "?  p                                          ?",
+      "?        p         p                          ?",
+      "?     h                                       ?",
+      "?  g         g                                ?",
+      "___-____----__---_-__---_______----_-__---_-__-",
+      "dddddddudddududddduddddddu"
     ],
     [
       "?U                     ?  ",
@@ -2989,11 +3003,8 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
       "dddddddudddududddduddddddu"
     ]
   ];
-  scene("game", ({ levelIdx, score }) => {
+  scene("game", ({ levelIdx }) => {
     layers(["bg", "obj", "ui"], "obj");
-    add([
-      sprite("bg", { width: width() * 2, height: height() * 2 })
-    ]);
     const level = addLevel(LEVELS[levelIdx || 0], {
       height: 35,
       width: 40,
@@ -3067,34 +3078,35 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
         solid()
       ]
     });
-    add([
-      text(score),
-      pos(10, 10),
-      fixed()
-    ]);
     onUpdate("entry", (e) => {
       e.flipY(true);
     });
-    const player = add([
-      sprite("luigi"),
-      pos(80, 30),
-      area(),
-      body()
+    add([
+      sprite("bg", {
+        width: width() * 2,
+        height: height() * 2
+      }),
+      layer("bg")
     ]);
-    const mewigi = add([
-      sprite("mewigi"),
-      scale(0.6),
-      pos(20, 60),
-      area(),
-      follow(player, vec2(10, -10))
+    add([
+      text("0"),
+      pos(40, 10),
+      layer("ui"),
+      "fuck",
+      fixed(),
+      { value: score }
     ]);
+    onUpdate("fuck", (f2) => {
+      f2.text = score;
+    });
     if (levelIdx == 0) {
       add([
         text(`Use the arrow keys to move left and right`, {
           width: 150,
           size: 20
         }),
-        pos(24, 180)
+        pos(24, 180),
+        layer("ui")
       ]);
       add([
         text(`Press space to overcome jeff bezos's grave`, {
@@ -3108,14 +3120,16 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
           width: 150,
           size: 20
         }),
-        pos(600, 180)
+        pos(600, 180),
+        layer("ui")
       ]);
       add([
         text(` To the next level`, {
           width: 150,
           size: 20
         }),
-        pos(800, 240)
+        pos(800, 240),
+        layer("ui")
       ]);
     }
     if (levelIdx == 1) {
@@ -3124,9 +3138,25 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
           width: 230,
           size: 15
         }),
-        pos(24, 180)
+        pos(24, 180),
+        layer("ui")
       ]);
     }
+    const player = add([
+      sprite("luigi"),
+      pos(80, 30),
+      area(),
+      body(),
+      layer("obj")
+    ]);
+    const mewigi = add([
+      sprite("mewigi"),
+      scale(0.6),
+      pos(20, 60),
+      area(),
+      follow(player, vec2(10, -10)),
+      layer("obj")
+    ]);
     player.onUpdate(() => {
       camPos(player.pos);
     });
@@ -3142,11 +3172,10 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
     player.collides("next", () => {
       if (levelIdx < LEVELS.length - 1) {
         go("game", {
-          levelIdx: levelIdx + 1,
-          score
+          levelIdx: levelIdx + 1
         });
       } else {
-        go("win", { score });
+        go("win");
       }
     });
     player.onUpdate(() => {
@@ -3210,33 +3239,33 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
     onCollide("bullet", "ghost", (b2, h) => {
       destroy(b2);
       destroy(h);
-      score.value++;
-      score.text = score.value;
-    });
-    player.collides("next", () => {
-      console.log("level");
+      score = score + 1;
     });
   });
-  scene("win", ({ score }) => {
+  scene("win", () => {
     add([
-      text(`You ripped out ${score} teeth!!!`, {
-        width: width()
+      text(`You ripped out ${score} teeth!!! They will make a fine addition to your collection.`, {
+        width: 300,
+        size: 30
       }),
       pos(12)
     ]);
   });
   scene("lose", () => {
     add([
-      text("Luigi never made it to his dentist appointment. The police never found a body, nor did they find his cat. The mystery goes unsolved to this very day."),
+      text("Luigi never made it to his dentist appointment. The police never found a body, nor did they find his cat. The mystery goes unsolved to this very day.(Press any key to try again)", {
+        width: 500,
+        size: 30
+      }),
       pos(12)
     ]);
     onKeyPress(start);
   });
   function start() {
     go("game", {
-      levelIdx: 0,
-      score: 0
+      levelIdx: 0
     });
+    score = 0;
   }
   __name(start, "start");
   start();

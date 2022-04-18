@@ -25,16 +25,11 @@ loadPedit("secret", "sprites/secret.pedit");
 
 
 let BULLET_SPEED = 1000;
-let SCORE_VALUE = 0
-let isFlipped = false; 
-const MOVE_SPEED = 300;
-const JUMP_FORCE = 560;
+let score = 0;
+const MOVE_SPEED = 310;
+const JUMP_FORCE = 500;
 let CURRENT_JUMP_FORCE = JUMP_FORCE;
 let hspeed = -50;
-
-
-  //back
-  
 
 
 //LEVELS TEMPLATE
@@ -66,6 +61,19 @@ let hspeed = -50;
    'xxxxxxxxxxxxxxxxxxxxxxxxxx',
    'dudddddddddduddddddddddddd',
  ], 
+           [
+  '?U                                            ?',
+  '?                                             ?',
+  '?  p                                          ?',
+  '?                                             ?',
+  '?                                             ?',
+  '?  p                                          ?',
+  '?        p         p                          ?',
+  '?     h                                       ?',
+  '?  g         g                                ?',
+  '___-____----__---_-__---_______----_-__---_-__-',
+  'dddddddudddududddduddddddu',
+  ],
   [  
   '?U                     ?  ',
   '?    sss s             ?  ',
@@ -103,14 +111,14 @@ let hspeed = -50;
   '?     h p   h            ?',
   '?     g     g       o    ?',
   '___-____----__---_-__---__',
-  'dddddddudddududddduddddddu',
-]   
-  ]
-scene("game", ({levelIdx, score }) => {
+  'dddddddudddududddduddddddu',   
+  ],
+  
+]
+scene("game", ({levelIdx}) => {
 
   layers(['bg', 'obj', 'ui'], 'obj')
-    add([ sprite("bg", {width: width() * 2, height: height() * 2})
-    ]);
+  
 
 	const level = addLevel(LEVELS[levelIdx || 0], {
   height: 35,
@@ -178,32 +186,34 @@ scene("game", ({levelIdx, score }) => {
   ], 
 })
 
-  add([
-   text(score),
-   pos(10,10),
-   fixed(),
- ])
 
 onUpdate('entry', (e) =>{
         e.flipY(true);
       }
 )
 
-const player = add([
-    sprite("luigi"),
-    pos(80, 30),
-    area(),
-  body()
-])
 
-const mewigi = add([
-    sprite("mewigi"),
-    scale(0.6),
-    pos(20,60),
-    area(),
-    follow(player, vec2(10, -10)),
+ add([ 
+  sprite("bg", 
+    {width: width() * 2, 
+     height: height() * 2}),
+  layer('bg'),
+  ]);
+  
+  add([
+    text('0'),
+    pos(40,10), 
+    layer('ui'),
+    "fuck",
+    fixed(),
+    {value: score}
+    ])
 
-])
+onUpdate('fuck', (f) =>{
+    f.text = score;
+  }
+);
+
 
   if (levelIdx == 0){
   add([
@@ -212,6 +222,7 @@ const mewigi = add([
         size: 20,
   		}),
   		pos(24, 180),
+      layer('ui'),
   	])
 
 add([
@@ -222,20 +233,22 @@ add([
   		pos(400, 180),
   	])
 
-
   add([
   		text(`Collect teeth to raise your score!`, {
   			width: 150,
         size: 20,
   		}),
   		pos(600, 180),
+      layer('ui'),
   	])
+    
   add([
 		text(` To the next level`, {
  			width: 150,
        size: 20,
  		}),
  		pos(800, 240),
+    layer('ui'),
  	])
 }
 
@@ -246,10 +259,28 @@ add([
         size: 15,
   		}),
   		pos(24, 180),
+      layer('ui'),
   	])
   }
-  
 
+ const player = add([
+    sprite("luigi"),
+    pos(80, 30),
+    area(),
+  body(),
+  layer('obj'),
+])
+
+const mewigi = add([
+    sprite("mewigi"),
+    scale(0.6),
+    pos(20,60),
+    area(),
+    follow(player, vec2(10, -10)),
+    layer('obj'),
+
+]) 
+  
  
 player.onUpdate(() => {
 	camPos(player.pos)
@@ -271,10 +302,9 @@ player.onUpdate(() => {
 		if (levelIdx < LEVELS.length - 1) {
 			go("game", {
 				levelIdx: levelIdx + 1,
-				score: score,
 			})
 		} else {
-			go("win", { score: score, })
+			go("win")
 		}
 	})
 
@@ -353,18 +383,8 @@ onUpdate('bullet', (b) =>{
 onCollide('bullet', 'ghost', (b,h)=> {
   destroy(b)
   destroy(h)
-  score.value++
-  score.text = score.value
+    score = score + 1;
 }) 
-
-
-player.collides("next", ()=>
-  {
-    console.log("level")
-    
-  })
-
-  
 
 })
 
@@ -372,18 +392,16 @@ player.collides("next", ()=>
 
 
 
-//player-related
 
 
-//misc
+//scene defs
 
-
-
-scene("win", ({ score }) => {
+scene("win", () => {
 
 	add([
-		text(`You ripped out ${score} teeth!!!`, {
-			width: width(),
+		text(`You ripped out ${score} teeth!!! They will make a fine addition to your collection.`, {
+			width: 300,
+      size: 30,
 		}),
 		pos(12),
 	])
@@ -393,7 +411,10 @@ scene("win", ({ score }) => {
 scene("lose", () => {
 
     add([
-        text("Luigi never made it to his dentist appointment. The police never found a body, nor did they find his cat. The mystery goes unsolved to this very day."),
+        text("Luigi never made it to his dentist appointment. The police never found a body, nor did they find his cat. The mystery goes unsolved to this very day.(Press any key to try again)", {
+          width: 500,
+          size: 30,
+        }),
         pos(12),
     ])
 
@@ -409,8 +430,8 @@ scene("lose", () => {
 function start() {
 	go("game", {
 		levelIdx: 0,
-    score: 0,
 	})
+  score = 0;
 }
 
 start()
