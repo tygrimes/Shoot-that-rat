@@ -2936,6 +2936,7 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
   var JUMP_FORCE = 500;
   var CURRENT_JUMP_FORCE = JUMP_FORCE;
   var hspeed = -50;
+  var ammo = 6;
   var LEVELS = [
     [
       "?U                     ?  ",
@@ -2951,16 +2952,16 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
       "dudddddddddduddddddddddddd"
     ],
     [
-      "?U                                            ?",
-      "?                                             ?",
-      "?  p                                          ?",
-      "?                                             ?",
-      "?                                             ?",
-      "?  p                                          ?",
-      "?        p         p                          ?",
-      "?     h                                       ?",
-      "?  g         g                                ?",
-      "___-____----__---_-__---_______----_-__---_-__-",
+      "?U                                             ?",
+      "?                                              ?",
+      "?         T  h      g     T                    ?",
+      "?   p     p    p   pp     d                    ?",
+      "?   T                    dd                    ?",
+      "?   p     T             ddd                    ?",
+      "?         p           dddud                    ?",
+      "?      h              duddddd   h    h     h   ?",
+      "?   g         g       dddddddud    T     T   o ?",
+      "___-____----__---_-dudddddudd___----_-__---_-__-",
       "dddddddudddududddduddddddu"
     ],
     [
@@ -3027,10 +3028,14 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
         "dangerous"
       ],
       "d": () => [
-        sprite("deepground2")
+        sprite("deepground2"),
+        area(),
+        solid()
       ],
       "u": () => [
-        sprite("deepground")
+        sprite("deepground"),
+        area(),
+        solid()
       ],
       "T": () => [
         sprite("tooth"),
@@ -3089,8 +3094,18 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
       layer("bg")
     ]);
     add([
-      text("0"),
-      pos(40, 10),
+      text("Score:", {
+        size: 30
+      }),
+      pos(10, 20),
+      layer("ui"),
+      fixed()
+    ]);
+    add([
+      text("0", {
+        size: 30
+      }),
+      pos(120, 20),
       layer("ui"),
       "fuck",
       fixed(),
@@ -3099,6 +3114,27 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
     onUpdate("fuck", (f2) => {
       f2.text = score;
     });
+    add([
+      text("Ammo:", {
+        size: 30
+      }),
+      pos(10, 50),
+      layer("ui"),
+      fixed()
+    ]);
+    add([
+      text("0", {
+        size: 30
+      }),
+      pos(100, 50),
+      layer("ui"),
+      "ammoCount",
+      fixed(),
+      { value: ammo }
+    ]);
+    onUpdate("ammoCount", (ac) => {
+      ac.text = ammo;
+    });
     if (levelIdx == 0) {
       add([
         text(`Use the arrow keys to move left and right`, {
@@ -3106,14 +3142,15 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
           size: 20
         }),
         pos(24, 180),
-        layer("ui")
+        layer("bg")
       ]);
       add([
         text(`Press space to overcome jeff bezos's grave`, {
           width: 150,
           size: 20
         }),
-        pos(400, 180)
+        pos(400, 180),
+        layer("bg")
       ]);
       add([
         text(`Collect teeth to raise your score!`, {
@@ -3121,7 +3158,7 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
           size: 20
         }),
         pos(600, 180),
-        layer("ui")
+        layer("bg")
       ]);
       add([
         text(` To the next level`, {
@@ -3129,7 +3166,7 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
           size: 20
         }),
         pos(800, 240),
-        layer("ui")
+        layer("bg")
       ]);
     }
     if (levelIdx == 1) {
@@ -3139,7 +3176,7 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
           size: 15
         }),
         pos(24, 180),
-        layer("ui")
+        layer("bg")
       ]);
     }
     const player = add([
@@ -3153,7 +3190,6 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
       sprite("mewigi"),
       scale(0.6),
       pos(20, 60),
-      area(),
       follow(player, vec2(10, -10)),
       layer("obj")
     ]);
@@ -3170,6 +3206,7 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
       score = score + 1;
     });
     player.collides("next", () => {
+      ammo = 6;
       if (levelIdx < LEVELS.length - 1) {
         go("game", {
           levelIdx: levelIdx + 1
@@ -3214,7 +3251,10 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
       BULLET_SPEED = 1e3;
     });
     keyPress("e", () => {
-      spawnBullet(mewigi.pos.add(20, 0));
+      if (ammo > 0) {
+        ammo = ammo - 1;
+        spawnBullet(mewigi.pos.add(20, 0));
+      }
     });
     function spawnBullet(p) {
       add([
@@ -3240,6 +3280,7 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
       destroy(b2);
       destroy(h);
       score = score + 1;
+      ammo = ammo + 1;
     });
   });
   scene("win", () => {

@@ -30,6 +30,7 @@ const MOVE_SPEED = 310;
 const JUMP_FORCE = 500;
 let CURRENT_JUMP_FORCE = JUMP_FORCE;
 let hspeed = -50;
+let ammo = 6;
 
 
 //LEVELS TEMPLATE
@@ -62,16 +63,16 @@ let hspeed = -50;
    'dudddddddddduddddddddddddd',
  ], 
            [
-  '?U                                            ?',
-  '?                                             ?',
-  '?  p                                          ?',
-  '?                                             ?',
-  '?                                             ?',
-  '?  p                                          ?',
-  '?        p         p                          ?',
-  '?     h                                       ?',
-  '?  g         g                                ?',
-  '___-____----__---_-__---_______----_-__---_-__-',
+  '?U                                             ?',
+  '?                                              ?',
+  '?         T  h      g     T                    ?',
+  '?   p     p    p   pp     d                    ?',
+  '?   T                    dd                    ?',
+  '?   p     T             ddd                    ?',
+  '?         p           dddud                    ?',
+  '?      h              duddddd   h    h     h   ?',
+  '?   g         g       dddddddud    T     T   o ?',
+  '___-____----__---_-dudddddudd___----_-__---_-__-',
   'dddddddudddududddduddddddu',
   ],
   [  
@@ -144,8 +145,12 @@ scene("game", ({levelIdx}) => {
   
   'd' : ()=>[
     sprite('deepground2'),
+    area(),
+    solid(),
   ],
   'u' : ()=>[sprite('deepground'),
+             area(),
+             solid(),
   ],
   'T' : ()=>[sprite('tooth'),
              area(), 
@@ -199,20 +204,60 @@ onUpdate('entry', (e) =>{
      height: height() * 2}),
   layer('bg'),
   ]);
+
+    add([
+    text('Score:',{
+      size: 30
+    }),
+    pos(10,20), 
+    layer('ui'),
+    fixed(),
+    ])
   
   add([
-    text('0'),
-    pos(40,10), 
+    text('0', {
+      size: 30
+    }),
+    pos(120,20), 
     layer('ui'),
     "fuck",
     fixed(),
     {value: score}
     ])
 
-onUpdate('fuck', (f) =>{
+  onUpdate('fuck', (f) =>{
     f.text = score;
   }
 );
+
+
+    add([
+    text('Ammo:',{
+      size: 30
+    }),
+    pos(10,50), 
+    layer('ui'),
+    fixed(),
+    ])
+  
+    add([
+    text('0',{
+      size: 30
+    }),
+    pos(100,50), 
+    layer('ui'),
+    "ammoCount",
+    fixed(),
+    {value: ammo}
+    ])
+
+
+onUpdate('ammoCount', (ac) =>{
+    ac.text = ammo;
+  }
+);
+
+
 
 
   if (levelIdx == 0){
@@ -222,7 +267,7 @@ onUpdate('fuck', (f) =>{
         size: 20,
   		}),
   		pos(24, 180),
-      layer('ui'),
+      layer('bg'),
   	])
 
 add([
@@ -231,6 +276,7 @@ add([
         size: 20,
       }),
   		pos(400, 180),
+      layer('bg')
   	])
 
   add([
@@ -239,7 +285,7 @@ add([
         size: 20,
   		}),
   		pos(600, 180),
-      layer('ui'),
+      layer('bg'),
   	])
     
   add([
@@ -248,7 +294,7 @@ add([
        size: 20,
  		}),
  		pos(800, 240),
-    layer('ui'),
+    layer('bg'),
  	])
 }
 
@@ -259,7 +305,7 @@ add([
         size: 15,
   		}),
   		pos(24, 180),
-      layer('ui'),
+      layer('bg'),
   	])
   }
 
@@ -275,7 +321,7 @@ const mewigi = add([
     sprite("mewigi"),
     scale(0.6),
     pos(20,60),
-    area(),
+    //
     follow(player, vec2(10, -10)),
     layer('obj'),
 
@@ -299,6 +345,7 @@ player.onUpdate(() => {
   })
 
   player.collides("next", () => {
+    ammo = 6;
 		if (levelIdx < LEVELS.length - 1) {
 			go("game", {
 				levelIdx: levelIdx + 1,
@@ -317,6 +364,7 @@ player.onUpdate(() => {
   keyPress('space', () => {
     if (player.grounded()) {
       isJumping = true
+      
       player.jump(CURRENT_JUMP_FORCE)
     }
   })
@@ -353,7 +401,10 @@ keyDown('right', ()=>{
 })
 
 keyPress('e', () => {
+  if (ammo > 0) {
+  ammo = ammo -1;
   spawnBullet(mewigi.pos.add(20,0))
+  }
 })
 
 function spawnBullet(p) {
@@ -384,6 +435,7 @@ onCollide('bullet', 'ghost', (b,h)=> {
   destroy(b)
   destroy(h)
     score = score + 1;
+    ammo = ammo + 1;
 }) 
 
 })
