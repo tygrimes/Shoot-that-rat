@@ -2930,6 +2930,7 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
   loadPedit("lvl2ground", "sprites/lvl2ground.pedit");
   loadPedit("newground2", "sprites/newground2.pedit");
   loadPedit("secret", "sprites/secret.pedit");
+  loadPedit("dentist", "sprites/dentist.pedit");
   var BULLET_SPEED = 1e3;
   var score = 0;
   var MOVE_SPEED = 310;
@@ -2952,6 +2953,19 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
       "dudddddddddduddddddddddddd"
     ],
     [
+      "?U                     ?  ",
+      "?                      ?  ",
+      "?                      ?  ",
+      "?                      ?  ",
+      "?                      ?  ",
+      "?           D           ?  ",
+      "?                      ?  ",
+      "?                      ?  ",
+      "?                      ?  ",
+      "xxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "dudddddddddduddddddddddddd"
+    ],
+    [
       "?U                                             ?",
       "?                                              ?",
       "?         T  h      g     T                    ?",
@@ -2960,9 +2974,9 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
       "?   p     T             ddd                    ?",
       "?         p           dddud                    ?",
       "?      h              duddddd   h    h     h   ?",
-      "?   g         g       dddddddud    T     T   o ?",
-      "___-____----__---_-dudddddudd___----_-__---_-__-",
-      "dddddddudddududddduddddddu"
+      "?   g         g       dddddddu_    T     T   o ?",
+      "___-____----__---_-dudddddudddd----_-__---_-__-",
+      "dddddddudddududddduddddddudddddddduddduddddduddu"
     ],
     [
       "?U                     ?  ",
@@ -3081,6 +3095,13 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
         sprite("secret"),
         area(),
         solid()
+      ],
+      "D": () => [
+        sprite("dentist"),
+        area(),
+        solid(),
+        scale(3),
+        body()
       ]
     });
     onUpdate("entry", (e) => {

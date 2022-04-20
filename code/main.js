@@ -22,6 +22,7 @@ loadPedit("invis", "sprites/invis.pedit");
 loadPedit("lvl2ground", "sprites/lvl2ground.pedit");
 loadPedit("newground2", "sprites/newground2.pedit");
 loadPedit("secret", "sprites/secret.pedit");
+loadPedit("dentist", "sprites/dentist.pedit");
 
 
 let BULLET_SPEED = 1000;
@@ -62,6 +63,19 @@ let ammo = 6;
    'xxxxxxxxxxxxxxxxxxxxxxxxxx',
    'dudddddddddduddddddddddddd',
  ], 
+   [  
+   '?U                     ?  ',
+   '?                      ?  ',
+   '?                      ?  ',
+   '?                      ?  ',
+   '?                      ?  ',
+   '?           D           ?  ',
+   '?                      ?  ',
+   '?                      ?  ',
+   '?                      ?  ',
+   'xxxxxxxxxxxxxxxxxxxxxxxxxx',
+   'dudddddddddduddddddddddddd',
+], 
            [
   '?U                                             ?',
   '?                                              ?',
@@ -71,9 +85,9 @@ let ammo = 6;
   '?   p     T             ddd                    ?',
   '?         p           dddud                    ?',
   '?      h              duddddd   h    h     h   ?',
-  '?   g         g       dddddddud    T     T   o ?',
-  '___-____----__---_-dudddddudd___----_-__---_-__-',
-  'dddddddudddududddduddddddu',
+  '?   g         g       dddddddu_    T     T   o ?',
+  '___-____----__---_-dudddddudddd----_-__---_-__-',
+  'dddddddudddududddduddddddudddddddduddduddddduddu',
   ],
   [  
   '?U                     ?  ',
@@ -189,6 +203,12 @@ scene("game", ({levelIdx}) => {
             area(),
             solid(),
   ], 
+    'D' : ()=>[sprite('dentist'),
+            area(),
+            solid(),
+            scale(3),
+            body(),
+  ],
 })
 
 
@@ -321,11 +341,12 @@ const mewigi = add([
     sprite("mewigi"),
     scale(0.6),
     pos(20,60),
-    //
     follow(player, vec2(10, -10)),
     layer('obj'),
 
 ]) 
+
+
   
  
 player.onUpdate(() => {
