@@ -25,13 +25,19 @@ loadPedit("secret", "sprites/secret.pedit");
 loadPedit("dentist", "sprites/dentist.pedit");
 
 
-let BULLET_SPEED = 1000;
+let BULLET_SPEED = 400;
+let DBULLET_SPEED = 10;
 let score = 0;
 const MOVE_SPEED = 310;
 const JUMP_FORCE = 500;
 let CURRENT_JUMP_FORCE = JUMP_FORCE;
 let hspeed = -50;
 let ammo = 6;
+let ENEMY_SPEED = 200;
+
+
+loadSound("shoot", "sounds/explode.mp3");
+loadSound("ghostDeath", "sounds/bug.mp3");
 
 
 //LEVELS TEMPLATE
@@ -63,13 +69,13 @@ let ammo = 6;
    'xxxxxxxxxxxxxxxxxxxxxxxxxx',
    'dudddddddddduddddddddddddd',
  ], 
-   [  
+    [  
    '?U                     ?  ',
    '?                      ?  ',
    '?                      ?  ',
    '?                      ?  ',
    '?                      ?  ',
-   '?           D           ?  ',
+   '?                      ?  ',
    '?                      ?  ',
    '?                      ?  ',
    '?                      ?  ',
@@ -115,6 +121,7 @@ let ammo = 6;
   '___-____----__---_-__---__',
   'dddddddudddududddduddddddu',
 ], 
+     
    [
   '?U                       ?',
   '?                        ?',
@@ -133,6 +140,16 @@ let ammo = 6;
 scene("game", ({levelIdx}) => {
 
   layers(['bg', 'obj', 'ui'], 'obj')
+
+//   var background = (x,y) => {
+//     add([
+//      scale(2),
+//      sprite("bg"),
+//      pos(x,y),
+//      area(),
+//     ])
+//   }
+// background(-500, -200)
   
 
 	const level = addLevel(LEVELS[levelIdx || 0], {
@@ -203,12 +220,6 @@ scene("game", ({levelIdx}) => {
             area(),
             solid(),
   ], 
-    'D' : ()=>[sprite('dentist'),
-            area(),
-            solid(),
-            scale(3),
-            body(),
-  ],
 })
 
 
@@ -345,10 +356,69 @@ const mewigi = add([
     layer('obj'),
 
 ]) 
+if (levelIdx == 1){
+const dentist = add([
+  sprite("dentist"),
+  pos(300,40),
+  scale(2),
+  area(),
+  solid(),
+  body(),
+  health(20),
+  state("move",["idle","attack","move"])
+])
 
+  dentist.onStateEnter("idle", async () => {
+	await wait(0.5)
+	dentist.enterState("attack")
+})
 
+dentist.onStateEnter("attack", async () => {
+
+	if (player.exists()) {
+
+		const dir = player.pos.sub(dentist.pos).unit()
+
+    if(player.pos.x < dentist.pos.x){
+      DBULLET_SPEED = -900;
+    }else if(player.pos.x > dentist.pos.x){
+      DBULLET_SPEED = 900;
+    }
+
+		add([
+			pos(dentist.pos.x,dentist.pos.y + 10),
+			move(dir.x, DBULLET_SPEED),
+			sprite("bullet"),
+			area(),
+			cleanup(),
+			origin("center"),
+      "dangerous",
+			"dbullet",
+		])
+
+//if()
   
- 
+	}
+
+	await wait(1)
+	dentist.enterState("move")
+
+})
+
+dentist.onStateEnter("move", async () => {
+	await wait(2)
+	dentist.enterState("idle")
+})
+
+dentist.onStateUpdate("move", () => {
+	if (!player.exists()) return
+	const dir = player.pos.sub(dentist.pos).unit()
+	dentist.move(dir.scale(ENEMY_SPEED))
+})
+
+
+dentist.enterState("move")
+}
 player.onUpdate(() => {
 	camPos(player.pos)
 }) 
@@ -424,7 +494,14 @@ keyDown('right', ()=>{
 keyPress('e', () => {
   if (ammo > 0) {
   ammo = ammo -1;
+  const shot = play("shoot", {
+    volume: 0.2,
+  });
   spawnBullet(mewigi.pos.add(20,0))
+  } else if (ammo <= 0){
+    const mfire = play("click", {
+      volume: 1,
+    })
   }
 })
 
@@ -459,6 +536,10 @@ onCollide('bullet', 'ghost', (b,h)=> {
     ammo = ammo + 1;
 }) 
 
+onCollide('bullet', 'dentist', (b,d)=>{
+  dentist.hurt(1);
+  console.log(dentist.health)
+})
 })
 
 
