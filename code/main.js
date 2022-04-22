@@ -23,6 +23,9 @@ loadPedit("lvl2ground", "sprites/lvl2ground.pedit");
 loadPedit("newground2", "sprites/newground2.pedit");
 loadPedit("secret", "sprites/secret.pedit");
 loadPedit("dentist", "sprites/dentist.pedit");
+loadPedit("mute", "sprites/mute.pedit");
+loadPedit("mutearrow", "sprites/mutearrow.pedit");
+loadPedit("musicmute", "sprites/musicmute.pedit");
 
 
 let BULLET_SPEED = 400;
@@ -34,11 +37,22 @@ let CURRENT_JUMP_FORCE = JUMP_FORCE;
 let hspeed = -50;
 let ammo = 6;
 let ENEMY_SPEED = 200;
+let bmuted = false;
+let volmod = 0;
 
+loadSound("shoot", "sounds/gunshot.mp3");
+loadSound("ghostdeath", "sounds/ghostdeath.mp3");
+loadSound("click", "sounds/gunclick.mp3");
+loadSound("load", "sounds/gunload.mp3");
+loadSound("AWP", "sounds/AWP.mp3");
+loadSound("jump", "sounds/jump.mp3");
+loadSound("coinpickup", "sounds/coinpickup.mp3");
+loadSound("spookymusic", "sounds/spookymusic.mp3");
 
-loadSound("shoot", "sounds/explode.mp3");
-loadSound("ghostDeath", "sounds/bug.mp3");
-
+const music = play("spookymusic", {
+	loop: true,
+  volume: 0
+})
 
 //LEVELS TEMPLATE
 //  [  
@@ -78,7 +92,7 @@ loadSound("ghostDeath", "sounds/bug.mp3");
    '?                      ?  ',
    '?                      ?  ',
    '?                      ?  ',
-   '?                      ?  ',
+   '?                    o ?  ',
    'xxxxxxxxxxxxxxxxxxxxxxxxxx',
    'dudddddddddduddddddddddddd',
 ], 
@@ -86,13 +100,13 @@ loadSound("ghostDeath", "sounds/bug.mp3");
   '?U                                             ?',
   '?                                              ?',
   '?         T  h      g     T                    ?',
-  '?   p     p    p   pp     d                    ?',
-  '?   T                    dd                    ?',
-  '?   p     T             ddd                    ?',
-  '?         p           dddud                    ?',
-  '?      h              duddddd   h    h     h   ?',
-  '?   g         g       dddddddu_    T     T   o ?',
-  '___-____----__---_-dudddddudddd----_-__---_-__-',
+  '?   p     p    p   pp     _                    ?',
+  '?   T                    -d                    ?',
+  '?   p     T             -dd                    ?',
+  '?         p           -_dud                    ?',
+  '?      h              dudddd-   h    h     h   ?',
+  '?   g         g       ddddddd-_    T     T   o ?',
+  '___-____----__---_-__-ddddudddd----_-__---_-__-',
   'dddddddudddududddduddddddudddddddduddduddddduddu',
   ],
   [  
@@ -227,8 +241,7 @@ onUpdate('entry', (e) =>{
         e.flipY(true);
       }
 )
-
-
+  
  add([ 
   sprite("bg", 
     {width: width() * 2, 
@@ -240,7 +253,7 @@ onUpdate('entry', (e) =>{
     text('Score:',{
       size: 30
     }),
-    pos(10,20), 
+    pos(10,30), 
     layer('ui'),
     fixed(),
     ])
@@ -249,7 +262,7 @@ onUpdate('entry', (e) =>{
     text('0', {
       size: 30
     }),
-    pos(120,20), 
+    pos(120,30), 
     layer('ui'),
     "fuck",
     fixed(),
@@ -266,7 +279,7 @@ onUpdate('entry', (e) =>{
     text('Ammo:',{
       size: 30
     }),
-    pos(10,50), 
+    pos(10,60), 
     layer('ui'),
     fixed(),
     ])
@@ -275,7 +288,7 @@ onUpdate('entry', (e) =>{
     text('0',{
       size: 30
     }),
-    pos(100,50), 
+    pos(100,60), 
     layer('ui'),
     "ammoCount",
     fixed(),
@@ -356,6 +369,48 @@ const mewigi = add([
     layer('obj'),
 
 ]) 
+
+  const muteButton = add([
+    sprite('mute'),
+    scale(1),
+    pos(10,5),
+    layer('obj'),
+    fixed(),
+    area(),
+    "button"
+  ])
+
+  const musicMute = add([
+    sprite('musicmute'),
+    scale(1.1),
+    pos(35,5),
+    layer('obj'),
+    fixed(),
+    area(),
+    "button"
+  ])
+  
+  
+  onClick("button", ()=>{
+    bmuted = true
+    const muteline = add([
+    sprite('mutearrow'),
+    scale(1),
+    pos(11,6),
+    layer('obj'),
+    fixed(),
+    area(),
+    "muted",
+    
+  ])
+  })
+
+
+  
+
+  
+
+  
 if (levelIdx == 1){
 const dentist = add([
   sprite("dentist"),
@@ -374,7 +429,9 @@ const dentist = add([
 })
 
 dentist.onStateEnter("attack", async () => {
-
+const dshot = play("AWP", {
+      volume: 1 + volmod,
+    })
 	if (player.exists()) {
 
 		const dir = player.pos.sub(dentist.pos).unit()
@@ -433,6 +490,9 @@ player.onUpdate(() => {
   player.collides('points', (p) => {
     destroy(p)
     score = score + 1;
+    const spoint = play("coinpickup", {
+      volume: 1 + volmod,
+    })
   })
 
   player.collides("next", () => {
@@ -455,16 +515,18 @@ player.onUpdate(() => {
   keyPress('space', () => {
     if (player.grounded()) {
       isJumping = true
-      
       player.jump(CURRENT_JUMP_FORCE)
     }
+    const pjump = play("jump", {
+      volume: 0.1 + volmod,
+    })
   })
 
 keyDown('right', ()=> {
   player.move(MOVE_SPEED, 0);
   player.flipX(false);
   mewigi.flipX(false);
-  
+ 
 })
 
 keyDown('left', ()=> {
@@ -495,12 +557,12 @@ keyPress('e', () => {
   if (ammo > 0) {
   ammo = ammo -1;
   const shot = play("shoot", {
-    volume: 0.2,
+    volume: 0.2 + volmod,
   });
   spawnBullet(mewigi.pos.add(20,0))
   } else if (ammo <= 0){
     const mfire = play("click", {
-      volume: 1,
+      volume: 1 + volmod,
     })
   }
 })
@@ -534,6 +596,13 @@ onCollide('bullet', 'ghost', (b,h)=> {
   destroy(h)
     score = score + 1;
     ammo = ammo + 1;
+  const mload = play("load", {
+      volume: 1 + volmod,
+    })
+  const gdeath = play("ghostdeath", {
+      volume: 0.5 + volmod,
+    })
+  
 }) 
 
 onCollide('bullet', 'dentist', (b,d)=>{
