@@ -5,7 +5,7 @@ import kaboom from "kaboom"
 kaboom()
 
 
-// load assets
+// load sprites
 loadPedit("luigi", "sprites/luigi.pedit")
 loadPedit("mewigi", "sprites/mewigi.pedit")
 loadPedit("ground", "sprites/ground.pedit");
@@ -26,20 +26,13 @@ loadPedit("dentist", "sprites/dentist.pedit");
 loadPedit("mute", "sprites/mute.pedit");
 loadPedit("mutearrow", "sprites/mutearrow.pedit");
 loadPedit("musicmute", "sprites/musicmute.pedit");
+loadPedit("heart", "sprites/heart.pedit");
+loadPedit("yeground", "sprites/yeground.pedit");
+loadSprite("goodmorning", "sprites/goodmorning.png");
+loadPedit("ammopouch", "sprites/ammopouch.pedit");
 
 
-let BULLET_SPEED = 400;
-let DBULLET_SPEED = 10;
-let score = 0;
-const MOVE_SPEED = 310;
-const JUMP_FORCE = 500;
-let CURRENT_JUMP_FORCE = JUMP_FORCE;
-let hspeed = -50;
-let ammo = 6;
-let ENEMY_SPEED = 200;
-let bmuted = false;
-let volmod = 0;
-
+//load sounds
 loadSound("shoot", "sounds/gunshot.mp3");
 loadSound("ghostdeath", "sounds/ghostdeath.mp3");
 loadSound("click", "sounds/gunclick.mp3");
@@ -48,11 +41,32 @@ loadSound("AWP", "sounds/AWP.mp3");
 loadSound("jump", "sounds/jump.mp3");
 loadSound("coinpickup", "sounds/coinpickup.mp3");
 loadSound("spookymusic", "sounds/spookymusic.mp3");
+loadSound("bossshot", "sounds/bossshot.mp3");
+loadSound("yoitskanyewest", "sounds/yoitskanyewest.wav");
+loadSound("tube", "sounds/tube.mp3");
+loadSound("goodnight", "sounds/goodnight.mp3");
+loadSound("scream", "sounds/scream.mp3");
+loadSound("maxammo", "sounds/;Max_ammo_sound_effect_(getmp3.pro).mp3")
 
-const music = play("spookymusic", {
-	loop: true,
-  volume: 0
-})
+//load variables and consts
+const MOVE_SPEED = 310;
+const JUMP_FORCE = 500;
+let CURRENT_JUMP_FORCE = JUMP_FORCE;
+let lives = [];
+let BULLET_SPEED = 400;
+let DBULLET_SPEED = 10;
+let score = 0;
+let hspeed = -50;
+let ammo = 6;
+let ENEMY_SPEED = 200;
+let bmuted = false;
+let volmod = 0;
+let hx = 10;
+let musicVol = 0;
+let hearts = 3;
+
+//level music
+
 
 //LEVELS TEMPLATE
 //  [  
@@ -92,23 +106,11 @@ const music = play("spookymusic", {
    '?                      ?  ',
    '?                      ?  ',
    '?                      ?  ',
-   '?                    o ?  ',
+   '?               a    o ?  ',
    'xxxxxxxxxxxxxxxxxxxxxxxxxx',
    'dudddddddddduddddddddddddd',
 ], 
-           [
-  '?U                                             ?',
-  '?                                              ?',
-  '?         T  h      g     T                    ?',
-  '?   p     p    p   pp     _                    ?',
-  '?   T                    -d                    ?',
-  '?   p     T             -dd                    ?',
-  '?         p           -_dud                    ?',
-  '?      h              dudddd-   h    h     h   ?',
-  '?   g         g       ddddddd-_    T     T   o ?',
-  '___-____----__---_-__-ddddudddd----_-__---_-__-',
-  'dddddddudddududddduddddddudddddddduddduddddduddu',
-  ],
+
   [  
   '?U                     ?  ',
   '?    sss s             ?  ',
@@ -123,17 +125,17 @@ const music = play("spookymusic", {
   'dudddddddddduddddddddddddd',
 ], 
 [
-  '?U                       ?',
-  '?                        ?',
-  '?                        ?',
-  '?             h          ?',
-  '?             g          ?',
-  '?          T  p          ?',
-  '?  T  p  p               ?',
-  '?  p  h  h        h   h  ?',
-  '?p    g  g        g o g  ?',
-  '___-____----__---_-__---__',
-  'dddddddudddududddduddddddu',
+  '?U                                            ?',
+  '?                                             ?',
+  '?                                             ?',
+  '?                             T              ?',
+  '?                 T      h   p               ?',
+  '?           T     pp     p                    ?',
+  '?           p      d h h h d                    ?',
+  '?                  d       dd                  ?',
+  '?  g     h    p    dd      ddd      h      o    g ?',
+  '___-____----__---_-d_---__-_-______--__---____?',
+  'dddddddudddududdddudddddduddddddduddududddduddd',
 ], 
      
    [
@@ -148,9 +150,23 @@ const music = play("spookymusic", {
   '?     g     g       o    ?',
   '___-____----__---_-__---__',
   'dddddddudddududddduddddddu',   
+  ],         
+      [
+  '?U                                             ?',
+  '?                                              ?',
+  '?         T  h      g     T                    ?',
+  '?   p     p    p   pp     _                    ?',
+  '?   T                    -d                    ?',
+  '?   p     T             -dd                    ?',
+  '?         p           -_dud                    ?',
+  '?      h              dudddd-   h    h     h   ?',
+  '?   g         g       ddddddd-_    T     T   o ?',
+  '___-____----__---_-__-ddddudddd----_-__---_-__-',
+  'dddddddudddududddduddddddudddddddduddduddddduddu',
   ],
-  
 ]
+
+
 scene("game", ({levelIdx}) => {
 
   layers(['bg', 'obj', 'ui'], 'obj')
@@ -173,6 +189,7 @@ scene("game", ({levelIdx}) => {
     sprite('ground'),
     solid(), 
     area(),
+    "impassable"
   ],
   'g' : ()=>[
     sprite('grave'),
@@ -192,51 +209,75 @@ scene("game", ({levelIdx}) => {
     sprite('deepground2'),
     area(),
     solid(),
+    "impassable"
   ],
-  'u' : ()=>[sprite('deepground'),
-             area(),
-             solid(),
+  'u' : ()=>[
+    sprite('deepground'),
+    area(),
+    solid(),
+    "impassable"
   ],
-  'T' : ()=>[sprite('tooth'),
-             area(), 
-             "points",
+  'T' : ()=>[
+    sprite('tooth'),
+    area(), 
+    "points",
   ],
-  'p' : ()=>[sprite('platform'),
-             area(),
-             solid(),
+  'p' : ()=>[
+    sprite('platform'),
+    area(),
+    solid(),
+    "impassable"
   ],
-  'o' : ()=>[sprite('hole'),
-             area(),
-             scale(2),
-             body(),
-             "next"
+  'o' : ()=>[
+    sprite('hole'),
+    area(),
+    scale(2),
+    body(),
+    "next"
   ],
-  '?' : ()=>[sprite('invis'),
-             area(),
-             body(),
-             solid()
+  '?' : ()=>[
+    sprite('invis'),
+    area(),
+    body(),
+    solid(),
+    "impassable"
   ],
-  '_' : ()=>[sprite('lvl2ground'),
-            area(),
-             solid()
+  '_' : ()=>[
+    sprite('lvl2ground'),
+    area(),
+    solid(),
+    "impassable"
   ],
-  '-' : ()=>[sprite('newground2'),
-            area(),
-             solid()
+  '-' : ()=>[
+    sprite('newground2'),
+    area(),
+    solid(),
+    "impassable",
   ],
-      'U' : ()=>[sprite('hole'),
-            area(),
-            solid(),
-            scale(4),
-            "entry"
+      'U' : ()=>[
+    sprite('hole'),
+    area(),
+    solid(),
+    scale(4),
+    "entry"
   ],
-    's' : ()=>[sprite('secret'),
-            area(),
-            solid(),
+    's' : ()=>[
+    sprite('secret'),
+    area(),
+    solid(),
+           
   ], 
+    'a' : ()=>[
+    sprite('ammopouch'),
+    area(),
+    solid(),
+    body(),
+    scale(2),
+    "ammogains",   
+  ],
 })
 
-
+//sprite flips and quick adds
 onUpdate('entry', (e) =>{
         e.flipY(true);
       }
@@ -249,7 +290,14 @@ onUpdate('entry', (e) =>{
   layer('bg'),
   ]);
 
-    add([
+  const music = play("spookymusic", {
+	loop: true,
+  volume: musicVol
+})
+
+  //UI text
+  
+  add([
     text('Score:',{
       size: 30
     }),
@@ -296,10 +344,46 @@ onUpdate('entry', (e) =>{
     ])
 
 
-onUpdate('ammoCount', (ac) =>{
+  onUpdate('ammoCount', (ac) =>{
     ac.text = ammo;
   }
+  );
+
+  const heart = add([
+  sprite("heart"),
+  scale(2),
+  pos(hx,90),
+  layer('obj'),
+  area(),
+  fixed()
+])
+
+  add([
+    text(':',{
+      size: 30
+    }),
+    pos(40,85), 
+    layer('ui'),
+    fixed(),
+    ])
+
+  
+    add([
+    text('3',{
+      size: 30
+    }),
+    pos(55,85), 
+    layer('ui'),
+    "heartcount",
+    fixed(),
+    ])
+
+
+onUpdate('heartcount', (hc) =>{
+    hc.text = hearts;
+  }
 );
+  
 
 
 
@@ -352,6 +436,12 @@ add([
       layer('bg'),
   	])
   }
+  
+
+
+
+
+  
 
  const player = add([
     sprite("luigi"),
@@ -359,7 +449,14 @@ add([
     area(),
   body(),
   layer('obj'),
+  health(3),
 ])
+
+// onUpdate(() => {
+//     hearts = player.health
+// })
+
+  
 
 const mewigi = add([
     sprite("mewigi"),
@@ -387,7 +484,7 @@ const mewigi = add([
     layer('obj'),
     fixed(),
     area(),
-    "button"
+    "mbutton"
   ])
   
   
@@ -405,32 +502,45 @@ const mewigi = add([
   ])
   })
 
+  onClick("mbutton", ()=>{
+    musicVol = musicVol - 0.2;
+    const muteline = add([
+    sprite('mutearrow'),
+    scale(1),
+    pos(36,6),
+    layer('obj'),
+    fixed(),
+    area(),
+  ])
+  })
 
-  
-
-  
+   player.collides("entry", ()=>{
+   if(levelIdx == 2){
+     go("kanye");
+   }
+ })
 
   
 if (levelIdx == 1){
-const dentist = add([
+let dentist = add([
   sprite("dentist"),
   pos(300,40),
-  scale(2),
+  scale(2.2),
   area(),
   solid(),
   body(),
-  health(20),
-  state("move",["idle","attack","move"])
+  health(5),
+  state("move",["idle","attack","move"]),
 ])
 
   dentist.onStateEnter("idle", async () => {
 	await wait(0.5)
-	dentist.enterState("attack")
+    dentist.enterState("attack")
 })
 
 dentist.onStateEnter("attack", async () => {
 const dshot = play("AWP", {
-      volume: 1 + volmod,
+      volume: 0.1 + volmod,
     })
 	if (player.exists()) {
 
@@ -472,17 +582,37 @@ dentist.onStateUpdate("move", () => {
 	const dir = player.pos.sub(dentist.pos).unit()
 	dentist.move(dir.scale(ENEMY_SPEED))
 })
-
-
 dentist.enterState("move")
+
+  dentist.collides('bullet', (b)=>{
+  const bhurt = play("bossshot", {
+      volume: 0.5 + volmod,
+    })
+  destroy(b);
+  dentist.hurt(1);
+})
+
+ dentist.on("death",()=>{
+  destroy(dentist);
+  score = score + 5;
+  play ("ghostdeath")
+  }) 
+
 }
 player.onUpdate(() => {
 	camPos(player.pos)
 }) 
 
-  player.collides("dangerous", ()=>
-  {
-    player.destroy();
+  player.collides("dangerous", ()=>{
+   player.hurt(1);
+   hearts = hearts - 1;
+    const phurt = play("scream", {
+      volume: 1 + volmod,
+    })
+  })
+
+  player.on("death", ()=>{
+     player.destroy();
     mewigi.destroy();
     go("lose")
   })
@@ -495,8 +625,19 @@ player.onUpdate(() => {
     })
   })
 
+  player.collides("ammogains", (a)=>{
+    ammo = ammo + 6;
+    destroy(a);
+    const ammog = play("maxammo", {
+      volume: 0.5 + volmod,
+    })
+  })
+  
   player.collides("next", () => {
     ammo = 6;
+    const gtube = play("tube", {
+      volume: 0.5 + volmod,
+    })
 		if (levelIdx < LEVELS.length - 1) {
 			go("game", {
 				levelIdx: levelIdx + 1,
@@ -591,7 +732,7 @@ onUpdate('bullet', (b) =>{
 }
 )
 
-onCollide('bullet', 'ghost', (b,h)=> {
+onCollide('bullet', 'ghost', (b,h)=>  {
   destroy(b)
   destroy(h)
     score = score + 1;
@@ -602,13 +743,12 @@ onCollide('bullet', 'ghost', (b,h)=> {
   const gdeath = play("ghostdeath", {
       volume: 0.5 + volmod,
     })
+})
+  
+onCollide('bullet', 'impassable', (b,ip)=> {
+  destroy(b)
   
 }) 
-
-onCollide('bullet', 'dentist', (b,d)=>{
-  dentist.hurt(1);
-  console.log(dentist.health)
-})
 })
 
 
@@ -640,11 +780,53 @@ scene("lose", () => {
         }),
         pos(12),
     ])
+})
+
+ scene("kanye", ()=> {
+   
+   addLevel([
+   ' U                        ',
+   '                          ',
+   '                          ',
+   '                          ',
+   '                          ',
+   '          y               ',
+   '                          ',
+   '                          ',
+   '                          ',
+   'xxxxxxxxxxxxxxxxxxxxxxxxxx',
+   'xxxxxxxxxxxxxxxxxxxxxxxxxx',
+   ],{
+     width:35,
+    height:40,
+     
+     'x' : ()=>[
+    sprite('yeground'),
+    solid(), 
+    area(),
+  ],
+     'y' : ()=>[sprite('goodmorning'),
+           area(),
+           solid(),
+           body(),
+           scale(4),
+],
+     'U' : ()=>[sprite('hole'),
+            area(),
+            solid(),
+            scale(4),
+            "entry"
+  ],
+   })
+ 
+ })
+
 
   
     // Press any key to go back
-    onKeyPress(start)
-  })
+  // onKeyPress(){
+  //   start()
+  // }
 
 
 
@@ -655,6 +837,7 @@ function start() {
 		levelIdx: 0,
 	})
   score = 0;
+  hearts = 3; 
 }
 
 start()

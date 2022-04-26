@@ -2969,17 +2969,10 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
       loadPedit("mute", "sprites/mute.pedit");
       loadPedit("mutearrow", "sprites/mutearrow.pedit");
       loadPedit("musicmute", "sprites/musicmute.pedit");
-      var BULLET_SPEED = 400;
-      var DBULLET_SPEED = 10;
-      var score = 0;
-      var MOVE_SPEED = 310;
-      var JUMP_FORCE = 500;
-      var CURRENT_JUMP_FORCE = JUMP_FORCE;
-      var hspeed = -50;
-      var ammo = 6;
-      var ENEMY_SPEED = 200;
-      var bmuted = false;
-      var volmod = 0;
+      loadPedit("heart", "sprites/heart.pedit");
+      loadPedit("yeground", "sprites/yeground.pedit");
+      loadSprite("goodmorning", "sprites/goodmorning.png");
+      loadPedit("ammopouch", "sprites/ammopouch.pedit");
       loadSound("shoot", "sounds/gunshot.mp3");
       loadSound("ghostdeath", "sounds/ghostdeath.mp3");
       loadSound("click", "sounds/gunclick.mp3");
@@ -2988,10 +2981,26 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
       loadSound("jump", "sounds/jump.mp3");
       loadSound("coinpickup", "sounds/coinpickup.mp3");
       loadSound("spookymusic", "sounds/spookymusic.mp3");
-      var music = play("spookymusic", {
-        loop: true,
-        volume: 0
-      });
+      loadSound("bossshot", "sounds/bossshot.mp3");
+      loadSound("yoitskanyewest", "sounds/yoitskanyewest.wav");
+      loadSound("tube", "sounds/tube.mp3");
+      loadSound("goodnight", "sounds/goodnight.mp3");
+      loadSound("scream", "sounds/scream.mp3");
+      loadSound("maxammo", "sounds/;Max_ammo_sound_effect_(getmp3.pro).mp3");
+      var MOVE_SPEED = 310;
+      var JUMP_FORCE = 500;
+      var CURRENT_JUMP_FORCE = JUMP_FORCE;
+      var BULLET_SPEED = 400;
+      var DBULLET_SPEED = 10;
+      var score = 0;
+      var hspeed = -50;
+      var ammo = 6;
+      var ENEMY_SPEED = 200;
+      var bmuted = false;
+      var volmod = 0;
+      var hx = 10;
+      var musicVol = 0;
+      var hearts = 3;
       var LEVELS = [
         [
           "?U                     ?  ",
@@ -3015,22 +3024,9 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
           "?                      ?  ",
           "?                      ?  ",
           "?                      ?  ",
-          "?                    o ?  ",
+          "?               a    o ?  ",
           "xxxxxxxxxxxxxxxxxxxxxxxxxx",
           "dudddddddddduddddddddddddd"
-        ],
-        [
-          "?U                                             ?",
-          "?                                              ?",
-          "?         T  h      g     T                    ?",
-          "?   p     p    p   pp     _                    ?",
-          "?   T                    -d                    ?",
-          "?   p     T             -dd                    ?",
-          "?         p           -_dud                    ?",
-          "?      h              dudddd-   h    h     h   ?",
-          "?   g         g       ddddddd-_    T     T   o ?",
-          "___-____----__---_-__-ddddudddd----_-__---_-__-",
-          "dddddddudddududddduddddddudddddddduddduddddduddu"
         ],
         [
           "?U                     ?  ",
@@ -3046,17 +3042,17 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
           "dudddddddddduddddddddddddd"
         ],
         [
-          "?U                       ?",
-          "?                        ?",
-          "?                        ?",
-          "?             h          ?",
-          "?             g          ?",
-          "?          T  p          ?",
-          "?  T  p  p               ?",
-          "?  p  h  h        h   h  ?",
-          "?p    g  g        g o g  ?",
-          "___-____----__---_-__---__",
-          "dddddddudddududddduddddddu"
+          "?U                                            ?",
+          "?                                             ?",
+          "?                                             ?",
+          "?                             T              ?",
+          "?                 T      h   p               ?",
+          "?           T     pp     p                    ?",
+          "?           p      d h h h d                    ?",
+          "?                  d       dd                  ?",
+          "?  g     h    p    dd      ddd      h      o    g ?",
+          "___-____----__---_-d_---__-_-______--__---____?",
+          "dddddddudddududdddudddddduddddddduddududddduddd"
         ],
         [
           "?U                       ?",
@@ -3070,6 +3066,19 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
           "?     g     g       o    ?",
           "___-____----__---_-__---__",
           "dddddddudddududddduddddddu"
+        ],
+        [
+          "?U                                             ?",
+          "?                                              ?",
+          "?         T  h      g     T                    ?",
+          "?   p     p    p   pp     _                    ?",
+          "?   T                    -d                    ?",
+          "?   p     T             -dd                    ?",
+          "?         p           -_dud                    ?",
+          "?      h              dudddd-   h    h     h   ?",
+          "?   g         g       ddddddd-_    T     T   o ?",
+          "___-____----__---_-__-ddddudddd----_-__---_-__-",
+          "dddddddudddududddduddddddudddddddduddduddddduddu"
         ]
       ];
       scene("game", ({ levelIdx }) => {
@@ -3080,7 +3089,8 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
           "x": () => [
             sprite("ground"),
             solid(),
-            area()
+            area(),
+            "impassable"
           ],
           "g": () => [
             sprite("grave"),
@@ -3098,12 +3108,14 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
           "d": () => [
             sprite("deepground2"),
             area(),
-            solid()
+            solid(),
+            "impassable"
           ],
           "u": () => [
             sprite("deepground"),
             area(),
-            solid()
+            solid(),
+            "impassable"
           ],
           "T": () => [
             sprite("tooth"),
@@ -3113,7 +3125,8 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
           "p": () => [
             sprite("platform"),
             area(),
-            solid()
+            solid(),
+            "impassable"
           ],
           "o": () => [
             sprite("hole"),
@@ -3126,17 +3139,20 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
             sprite("invis"),
             area(),
             body(),
-            solid()
+            solid(),
+            "impassable"
           ],
           "_": () => [
             sprite("lvl2ground"),
             area(),
-            solid()
+            solid(),
+            "impassable"
           ],
           "-": () => [
             sprite("newground2"),
             area(),
-            solid()
+            solid(),
+            "impassable"
           ],
           "U": () => [
             sprite("hole"),
@@ -3149,6 +3165,14 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
             sprite("secret"),
             area(),
             solid()
+          ],
+          "a": () => [
+            sprite("ammopouch"),
+            area(),
+            solid(),
+            body(),
+            scale(2),
+            "ammogains"
           ]
         });
         onUpdate("entry", (e) => {
@@ -3161,6 +3185,10 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
           }),
           layer("bg")
         ]);
+        const music = play("spookymusic", {
+          loop: true,
+          volume: musicVol
+        });
         add([
           text("Score:", {
             size: 30
@@ -3202,6 +3230,34 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
         ]);
         onUpdate("ammoCount", (ac) => {
           ac.text = ammo;
+        });
+        const heart = add([
+          sprite("heart"),
+          scale(2),
+          pos(hx, 90),
+          layer("obj"),
+          area(),
+          fixed()
+        ]);
+        add([
+          text(":", {
+            size: 30
+          }),
+          pos(40, 85),
+          layer("ui"),
+          fixed()
+        ]);
+        add([
+          text("3", {
+            size: 30
+          }),
+          pos(55, 85),
+          layer("ui"),
+          "heartcount",
+          fixed()
+        ]);
+        onUpdate("heartcount", (hc) => {
+          hc.text = hearts;
         });
         if (levelIdx == 0) {
           add([
@@ -3252,7 +3308,8 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
           pos(80, 30),
           area(),
           body(),
-          layer("obj")
+          layer("obj"),
+          health(3)
         ]);
         const mewigi = add([
           sprite("mewigi"),
@@ -3277,7 +3334,7 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
           layer("obj"),
           fixed(),
           area(),
-          "button"
+          "mbutton"
         ]);
         onClick("button", () => {
           bmuted = true;
@@ -3291,34 +3348,50 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
             "muted"
           ]);
         });
+        onClick("mbutton", () => {
+          musicVol = musicVol - 0.2;
+          const muteline = add([
+            sprite("mutearrow"),
+            scale(1),
+            pos(36, 6),
+            layer("obj"),
+            fixed(),
+            area()
+          ]);
+        });
+        player.collides("entry", () => {
+          if (levelIdx == 2) {
+            go("kanye");
+          }
+        });
         if (levelIdx == 1) {
-          const dentist2 = add([
+          let dentist = add([
             sprite("dentist"),
             pos(300, 40),
-            scale(2),
+            scale(2.2),
             area(),
             solid(),
             body(),
-            health(20),
+            health(5),
             state("move", ["idle", "attack", "move"])
           ]);
-          dentist2.onStateEnter("idle", () => __async(exports, null, function* () {
+          dentist.onStateEnter("idle", () => __async(exports, null, function* () {
             yield wait(0.5);
-            dentist2.enterState("attack");
+            dentist.enterState("attack");
           }));
-          dentist2.onStateEnter("attack", () => __async(exports, null, function* () {
+          dentist.onStateEnter("attack", () => __async(exports, null, function* () {
             const dshot = play("AWP", {
-              volume: 1 + volmod
+              volume: 0.1 + volmod
             });
             if (player.exists()) {
-              const dir = player.pos.sub(dentist2.pos).unit();
-              if (player.pos.x < dentist2.pos.x) {
+              const dir = player.pos.sub(dentist.pos).unit();
+              if (player.pos.x < dentist.pos.x) {
                 DBULLET_SPEED = -900;
-              } else if (player.pos.x > dentist2.pos.x) {
+              } else if (player.pos.x > dentist.pos.x) {
                 DBULLET_SPEED = 900;
               }
               add([
-                pos(dentist2.pos.x, dentist2.pos.y + 10),
+                pos(dentist.pos.x, dentist.pos.y + 10),
                 move(dir.x, DBULLET_SPEED),
                 sprite("bullet"),
                 area(),
@@ -3329,24 +3402,43 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
               ]);
             }
             yield wait(1);
-            dentist2.enterState("move");
+            dentist.enterState("move");
           }));
-          dentist2.onStateEnter("move", () => __async(exports, null, function* () {
+          dentist.onStateEnter("move", () => __async(exports, null, function* () {
             yield wait(2);
-            dentist2.enterState("idle");
+            dentist.enterState("idle");
           }));
-          dentist2.onStateUpdate("move", () => {
+          dentist.onStateUpdate("move", () => {
             if (!player.exists())
               return;
-            const dir = player.pos.sub(dentist2.pos).unit();
-            dentist2.move(dir.scale(ENEMY_SPEED));
+            const dir = player.pos.sub(dentist.pos).unit();
+            dentist.move(dir.scale(ENEMY_SPEED));
           });
-          dentist2.enterState("move");
+          dentist.enterState("move");
+          dentist.collides("bullet", (b2) => {
+            const bhurt = play("bossshot", {
+              volume: 0.5 + volmod
+            });
+            destroy(b2);
+            dentist.hurt(1);
+          });
+          dentist.on("death", () => {
+            destroy(dentist);
+            score = score + 5;
+            play("ghostdeath");
+          });
         }
         player.onUpdate(() => {
           camPos(player.pos);
         });
         player.collides("dangerous", () => {
+          player.hurt(1);
+          hearts = hearts - 1;
+          const phurt = play("scream", {
+            volume: 1 + volmod
+          });
+        });
+        player.on("death", () => {
           player.destroy();
           mewigi.destroy();
           go("lose");
@@ -3358,8 +3450,18 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
             volume: 1 + volmod
           });
         });
+        player.collides("ammogains", (a2) => {
+          ammo = ammo + 6;
+          destroy(a2);
+          const ammog = play("maxammo", {
+            volume: 0.5 + volmod
+          });
+        });
         player.collides("next", () => {
           ammo = 6;
+          const gtube = play("tube", {
+            volume: 0.5 + volmod
+          });
           if (levelIdx < LEVELS.length - 1) {
             go("game", {
               levelIdx: levelIdx + 1
@@ -3451,9 +3553,8 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
             volume: 0.5 + volmod
           });
         });
-        onCollide("bullet", "dentist", (b2, d) => {
-          dentist.hurt(1);
-          console.log(dentist.health);
+        onCollide("bullet", "impassable", (b2, ip) => {
+          destroy(b2);
         });
       });
       scene("win", () => {
@@ -3473,13 +3574,50 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
           }),
           pos(12)
         ]);
-        onKeyPress(start);
+      });
+      scene("kanye", () => {
+        addLevel([
+          " U                        ",
+          "                          ",
+          "                          ",
+          "                          ",
+          "                          ",
+          "          y               ",
+          "                          ",
+          "                          ",
+          "                          ",
+          "xxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "xxxxxxxxxxxxxxxxxxxxxxxxxx"
+        ], {
+          width: 35,
+          height: 40,
+          "x": () => [
+            sprite("yeground"),
+            solid(),
+            area()
+          ],
+          "y": () => [
+            sprite("goodmorning"),
+            area(),
+            solid(),
+            body(),
+            scale(4)
+          ],
+          "U": () => [
+            sprite("hole"),
+            area(),
+            solid(),
+            scale(4),
+            "entry"
+          ]
+        });
       });
       function start() {
         go("game", {
           levelIdx: 0
         });
         score = 0;
+        hearts = 3;
       }
       __name(start, "start");
       start();
