@@ -2986,7 +2986,7 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
       loadSound("tube", "sounds/tube.mp3");
       loadSound("goodnight", "sounds/goodnight.mp3");
       loadSound("scream", "sounds/scream.mp3");
-      loadSound("maxammo", "sounds/;Max_ammo_sound_effect_(getmp3.pro).mp3");
+      loadSound("maxammo", "sounds/Max_ammo_sound_effect_(getmp3.pro).mp3");
       var MOVE_SPEED = 310;
       var JUMP_FORCE = 500;
       var CURRENT_JUMP_FORCE = JUMP_FORCE;
@@ -2999,8 +2999,12 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
       var bmuted = false;
       var volmod = 0;
       var hx = 10;
-      var musicVol = 0;
+      var musicVol = 0.5;
       var hearts = 3;
+      var music = play("spookymusic", {
+        loop: true,
+        volume: musicVol
+      });
       var LEVELS = [
         [
           "?U                     ?  ",
@@ -3023,8 +3027,8 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
           "?                      ?  ",
           "?                      ?  ",
           "?                      ?  ",
-          "?                      ?  ",
-          "?               a    o ?  ",
+          "?          h           ?  ",
+          "?     g          a   o ?  ",
           "xxxxxxxxxxxxxxxxxxxxxxxxxx",
           "dudddddddddduddddddddddddd"
         ],
@@ -3050,7 +3054,7 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
           "?           T     pp     p                    ?",
           "?           p      d h h h d                    ?",
           "?                  d       dd                  ?",
-          "?  g     h    p    dd      ddd      h      o    g ?",
+          "?  g     h    p    dd     addd      h      o    g ?",
           "___-____----__---_-d_---__-_-______--__---____?",
           "dddddddudddududdddudddddduddddddduddududddduddd"
         ],
@@ -3079,6 +3083,19 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
           "?   g         g       ddddddd-_    T     T   o ?",
           "___-____----__---_-__-ddddudddd----_-__---_-__-",
           "dddddddudddududddduddddddudddddddduddduddddduddu"
+        ],
+        [
+          "?U                                            ?",
+          "?                                             ?",
+          "?                                             ?",
+          "?                                             ?",
+          "?                                             ?",
+          "?                                             ?",
+          "?                                             ?",
+          "?                                             ?",
+          "?                                             ?",
+          "___-____----__---_-__---_____-____---___-_-----",
+          "dddddddudddududdddudddddduddddduddddduddddudddd"
         ]
       ];
       scene("game", ({ levelIdx }) => {
@@ -3185,10 +3202,6 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
           }),
           layer("bg")
         ]);
-        const music = play("spookymusic", {
-          loop: true,
-          volume: musicVol
-        });
         add([
           text("Score:", {
             size: 30
@@ -3364,10 +3377,10 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
             go("kanye");
           }
         });
-        if (levelIdx == 1) {
+        if (levelIdx == 6) {
           let dentist = add([
             sprite("dentist"),
-            pos(300, 40),
+            pos(1600, 40),
             scale(2.2),
             area(),
             solid(),
@@ -3426,6 +3439,7 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
             destroy(dentist);
             score = score + 5;
             play("ghostdeath");
+            go("win");
           });
         }
         player.onUpdate(() => {
@@ -3433,6 +3447,7 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
         });
         player.collides("dangerous", () => {
           player.hurt(1);
+          shake(10);
           hearts = hearts - 1;
           const phurt = play("scream", {
             volume: 1 + volmod
@@ -3557,23 +3572,47 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
           destroy(b2);
         });
       });
-      scene("win", () => {
+      scene("startscreen", () => {
         add([
-          text(`You ripped out ${score} teeth!!! They will make a fine addition to your collection.`, {
+          pos(400, 200),
+          text("[Luigi Dies of Dental Sugery].green", {
+            width: 1e3,
+            size: 80,
+            styles: {
+              "green": {
+                color: rgb(0, 0, 225)
+              }
+            }
+          })
+        ]);
+      });
+      scene("win", () => {
+        const winmusic = play("goodnight", {
+          volume: 0.5 + volmod
+        });
+        musicVol = 0;
+        add([
+          text(`You ripped out ${score} teeth!!! They will make a fine addition to your collection. (Press R to play again)`, {
             width: 300,
             size: 30
           }),
           pos(12)
         ]);
+        keyPress("r", () => {
+          start();
+        });
       });
       scene("lose", () => {
         add([
-          text("Luigi never made it to his dentist appointment. The police never found a body, nor did they find his cat. The mystery goes unsolved to this very day.(Press any key to try again)", {
+          text("Luigi never made it to his dentist appointment. The police never found a body, nor did they find his cat. The mystery goes unsolved to this very day.(Press R to try again)", {
             width: 500,
             size: 30
           }),
           pos(12)
         ]);
+        keyPress("r", () => {
+          start();
+        });
       });
       scene("kanye", () => {
         addLevel([
@@ -3613,11 +3652,12 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
         });
       });
       function start() {
-        go("game", {
+        go("startscreen", {
           levelIdx: 0
         });
         score = 0;
         hearts = 3;
+        ammo = 6;
       }
       __name(start, "start");
       start();

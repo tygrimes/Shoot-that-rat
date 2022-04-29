@@ -46,8 +46,7 @@ loadSound("yoitskanyewest", "sounds/yoitskanyewest.wav");
 loadSound("tube", "sounds/tube.mp3");
 loadSound("goodnight", "sounds/goodnight.mp3");
 loadSound("scream", "sounds/scream.mp3");
-loadSound("maxammo", "sounds/;Max_ammo_sound_effect_(getmp3.pro).mp3")
-
+loadSound("maxammo", "sounds/Max_ammo_sound_effect_(getmp3.pro).mp3");
 //load variables and consts
 const MOVE_SPEED = 310;
 const JUMP_FORCE = 500;
@@ -62,10 +61,15 @@ let ENEMY_SPEED = 200;
 let bmuted = false;
 let volmod = 0;
 let hx = 10;
-let musicVol = 0;
+let musicVol = 0.5;
 let hearts = 3;
 
 //level music
+const music = play("spookymusic", {
+	loop: true,
+  volume: musicVol
+})
+
 
 
 //LEVELS TEMPLATE
@@ -105,8 +109,8 @@ let hearts = 3;
    '?                      ?  ',
    '?                      ?  ',
    '?                      ?  ',
-   '?                      ?  ',
-   '?               a    o ?  ',
+   '?          h           ?  ',
+   '?     g          a   o ?  ',
    'xxxxxxxxxxxxxxxxxxxxxxxxxx',
    'dudddddddddduddddddddddddd',
 ], 
@@ -133,7 +137,7 @@ let hearts = 3;
   '?           T     pp     p                    ?',
   '?           p      d h h h d                    ?',
   '?                  d       dd                  ?',
-  '?  g     h    p    dd      ddd      h      o    g ?',
+  '?  g     h    p    dd     addd      h      o    g ?',
   '___-____----__---_-d_---__-_-______--__---____?',
   'dddddddudddududdddudddddduddddddduddududddduddd',
 ], 
@@ -164,6 +168,19 @@ let hearts = 3;
   '___-____----__---_-__-ddddudddd----_-__---_-__-',
   'dddddddudddududddduddddddudddddddduddduddddduddu',
   ],
+      [
+  '?U                                            ?',
+  '?                                             ?',
+  '?                                             ?',
+  '?                                             ?',
+  '?                                             ?',
+  '?                                             ?',
+  '?                                             ?',
+  '?                                             ?',
+  '?                                             ?',
+  '___-____----__---_-__---_____-____---___-_-----',
+  'dddddddudddududdddudddddduddddduddddduddddudddd',   
+  ],         
 ]
 
 
@@ -290,10 +307,7 @@ onUpdate('entry', (e) =>{
   layer('bg'),
   ]);
 
-  const music = play("spookymusic", {
-	loop: true,
-  volume: musicVol
-})
+  
 
   //UI text
   
@@ -521,10 +535,10 @@ const mewigi = add([
  })
 
   
-if (levelIdx == 1){
+if (levelIdx == 6){
 let dentist = add([
   sprite("dentist"),
-  pos(300,40),
+  pos(1600,40),
   scale(2.2),
   area(),
   solid(),
@@ -596,6 +610,7 @@ dentist.enterState("move")
   destroy(dentist);
   score = score + 5;
   play ("ghostdeath")
+   go("win")
   }) 
 
 }
@@ -603,8 +618,10 @@ player.onUpdate(() => {
 	camPos(player.pos)
 }) 
 
+  
   player.collides("dangerous", ()=>{
    player.hurt(1);
+    shake(10);
    hearts = hearts - 1;
     const phurt = play("scream", {
       volume: 1 + volmod,
@@ -647,7 +664,7 @@ player.onUpdate(() => {
 		}
 	})
 
-  player.onUpdate(() => {
+  player.onUpdate(() => { 
     if(player.grounded()) {
       isJumping = false
     }
@@ -759,27 +776,54 @@ onCollide('bullet', 'impassable', (b,ip)=> {
 
 //scene defs
 
-scene("win", () => {
+scene("startscreen", ()=> {
+  add([
+    pos(400,200),
+    text('[Luigi Dies of Dental Sugery].green', {
+      width:1000,
+       size: 80,
+      styles:{
+        "green" : {
+          color: rgb(0,0,225)
+        }
+      }
+    })
+  ])
 
+})
+
+scene("win", () => {
+const winmusic = play("goodnight", {
+      volume: 0.5 + volmod,
+    }) 
+
+  musicVol = 0;
+   
 	add([
-		text(`You ripped out ${score} teeth!!! They will make a fine addition to your collection.`, {
+		text(`You ripped out ${score} teeth!!! They will make a fine addition to your collection. (Press R to play again)`, {
 			width: 300,
       size: 30,
 		}),
 		pos(12),
 	])
-
+     keyPress('r', () => {
+    start()
+   })
 })
 
 scene("lose", () => {
 
     add([
-        text("Luigi never made it to his dentist appointment. The police never found a body, nor did they find his cat. The mystery goes unsolved to this very day.(Press any key to try again)", {
+        text("Luigi never made it to his dentist appointment. The police never found a body, nor did they find his cat. The mystery goes unsolved to this very day.(Press R to try again)", {
           width: 500,
           size: 30,
         }),
         pos(12),
+      
     ])
+   keyPress('r', () => {
+    start()
+   })
 })
 
  scene("kanye", ()=> {
@@ -823,21 +867,19 @@ scene("lose", () => {
 
 
   
-    // Press any key to go back
-  // onKeyPress(){
-  //   start()
-  // }
+
 
 
 
 
 
 function start() {
-	go("game", {
+	go("startscreen", {
 		levelIdx: 0,
 	})
   score = 0;
   hearts = 3; 
+  ammo = 6;
 }
 
 start()
